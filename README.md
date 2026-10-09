@@ -13,7 +13,7 @@
 **An AI-driven mobile cooking companion designed specifically for authentic Indian home kitchens.**  
 *Transform pantry leftovers into regional delicacies, identify dishes from camera snaps, and customize spice levels, diet, and kitchen budgets in real time.*
 
-[Live Backend API](https://recipie-generator-qwj4.onrender.com) • [API Documentation](https://recipie-generator-qwj4.onrender.com/docs) • [Report Issue](https://github.com/ymukeshram/recipie_generator/issues)
+
 
 </div>
 
