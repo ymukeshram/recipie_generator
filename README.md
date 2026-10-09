@@ -266,8 +266,6 @@ docker run -p 8000:8000 -e GEMINI_API_KEY="your-gemini-key" rasoiai-backend
 
 ## 📱 Mobile APK Usage
 
-The latest debug APK is pre-configured with the live production backend.
-
 1. Download the APK onto your Android phone:
    ```text
    http://192.168.1.43:8080/app-debug.apk
@@ -277,5 +275,19 @@ The latest debug APK is pre-configured with the live production backend.
 
 ---
 
+## 🗺️ Future Scope (Version 2.0)
+
+* **Fine-Tuned Custom Culinary LLM** (Proprietary model replacing external Gemini API)
+* **On-Device Offline AI Inference** (Zero latency, full offline capability)
+* **Hands-Free Voice-Guided Cooking Mode**
+* **Smart Pantry Inventory & Expiry Alerts**
+* **Interactive Step Cooking Timers**
+* **1-Click Grocery Cart Export** (Blinkit / Zepto / Instamart)
+* **Regional Indian Multilingual Audio Guidance** (Hindi, Tamil, Telugu, Marathi, etc.)
+
+---
+
 ## 📄 License
 This project is open-source and licensed under the [MIT License](LICENSE).
+
+
