@@ -13,13 +13,9 @@ class ApiClient {
 
   late final Dio _dio;
   
-  static String customServerUrl = 'http://192.168.1.43:8000/api/v1';
+  static String customServerUrl = 'https://recipie-generator-qwj4.onrender.com/api/v1';
 
-  static String get baseUrl {
-    if (kIsWeb) return 'http://127.0.0.1:8000/api/v1';
-    if (Platform.isAndroid) return customServerUrl;
-    return 'http://127.0.0.1:8000/api/v1';
-  }
+  static String get baseUrl => customServerUrl;
 
   static String formatServerUrl(String url) {
     String formatted = url.trim();
