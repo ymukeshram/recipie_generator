@@ -117,8 +117,8 @@ class SurpriseMeCard extends StatelessWidget {
             height: 46,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.text(context),
-                foregroundColor: isDark ? const Color(0xFF111315) : Colors.white,
+                backgroundColor: isDark ? AppColors.accent : AppColors.textPrimary,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),

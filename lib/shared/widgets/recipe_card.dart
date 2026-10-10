@@ -26,9 +26,9 @@ class RecipeCard extends StatelessWidget {
       child: Container(
         width: width,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.cardBg(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: AppColors.cardBorder(context), width: 1),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -43,9 +43,9 @@ class RecipeCard extends StatelessWidget {
                         height: 125,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => _buildPlaceholder(),
+                        errorWidget: (_, __, ___) => _buildPlaceholder(context),
                       )
-                    : _buildPlaceholder(),
+                    : _buildPlaceholder(context),
                 Positioned(
                   top: 8,
                   left: 8,
@@ -101,10 +101,10 @@ class RecipeCard extends StatelessWidget {
                           recipe.dishName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: AppColors.text(context),
                           ),
                         ),
                       ),
@@ -119,13 +119,13 @@ class RecipeCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceSubtle,
+                            color: AppColors.subtleBg(context),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             recipe.dietaryTags.first,
-                            style: const TextStyle(
-                              color: AppColors.tagText,
+                            style: TextStyle(
+                              color: AppColors.text(context),
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                             ),
@@ -134,7 +134,7 @@ class RecipeCard extends StatelessWidget {
                       if (recipe.dietaryTags.isNotEmpty) const SizedBox(width: 6),
                       Text(
                         '${recipe.servings} ${recipe.servings == 1 ? 'serv' : 'servings'}',
-                        style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 10, color: AppColors.subtext(context)),
                       ),
                     ],
                   ),
@@ -147,30 +147,30 @@ class RecipeCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.schedule, size: 13, color: AppColors.textSecondary),
+                          Icon(Icons.schedule, size: 13, color: AppColors.subtext(context)),
                           const SizedBox(width: 3),
                           Text(
                             '${recipe.totalTimeMinutes}m',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 11, color: AppColors.subtext(context)),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             '•  ${recipe.difficulty}',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 11, color: AppColors.subtext(context)),
                           ),
                         ],
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceSubtle,
+                          color: AppColors.subtleBg(context),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: AppColors.cardBorder(context)),
                         ),
                         child: Text(
                           'Est. ₹${(recipe.costEstimateInr / (recipe.servings > 0 ? recipe.servings : 2)).round()}/serv',
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
+                          style: TextStyle(
+                            color: AppColors.text(context),
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
@@ -187,50 +187,51 @@ class RecipeCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     String emoji = '🍲';
-    Color bgGradientStart = const Color(0xFFFBF4EB);
-    Color bgGradientEnd = const Color(0xFFF1E4D3);
+    Color bgGradientStart = isDark ? const Color(0xFF282D36) : const Color(0xFFFBF4EB);
+    Color bgGradientEnd = isDark ? const Color(0xFF1E2228) : const Color(0xFFF1E4D3);
 
     final cuisineLower = recipe.cuisine.toLowerCase();
     final dishLower = recipe.dishName.toLowerCase();
 
     if (dishLower.contains('fries') || dishLower.contains('potato') || dishLower.contains('finger chips') || dishLower.contains('snack')) {
       emoji = '🍟';
-      bgGradientStart = const Color(0xFFFDF6EE);
-      bgGradientEnd = const Color(0xFFF8E7D4);
+      bgGradientStart = isDark ? const Color(0xFF2C2D35) : const Color(0xFFFDF6EE);
+      bgGradientEnd = isDark ? const Color(0xFF202229) : const Color(0xFFF8E7D4);
     } else if (dishLower.contains('burger') || dishLower.contains('sandwich')) {
       emoji = '🍔';
-      bgGradientStart = const Color(0xFFFDF6EE);
-      bgGradientEnd = const Color(0xFFF8E7D4);
+      bgGradientStart = isDark ? const Color(0xFF2C2D35) : const Color(0xFFFDF6EE);
+      bgGradientEnd = isDark ? const Color(0xFF202229) : const Color(0xFFF8E7D4);
     } else if (dishLower.contains('pizza')) {
       emoji = '🍕';
-      bgGradientStart = const Color(0xFFFCF1E6);
-      bgGradientEnd = const Color(0xFFF6DFC8);
+      bgGradientStart = isDark ? const Color(0xFF2C2A35) : const Color(0xFFFCF1E6);
+      bgGradientEnd = isDark ? const Color(0xFF201E28) : const Color(0xFFF6DFC8);
     } else if (dishLower.contains('pasta') || dishLower.contains('noodle') || dishLower.contains('maggi')) {
       emoji = '🍝';
-      bgGradientStart = const Color(0xFFFCF6E8);
-      bgGradientEnd = const Color(0xFFF7EAC9);
+      bgGradientStart = isDark ? const Color(0xFF2D2C34) : const Color(0xFFFCF6E8);
+      bgGradientEnd = isDark ? const Color(0xFF212028) : const Color(0xFFF7EAC9);
     } else if (cuisineLower.contains('south') || dishLower.contains('rasam') || dishLower.contains('sambar') || dishLower.contains('idli') || dishLower.contains('vada')) {
       emoji = '🥣';
-      bgGradientStart = const Color(0xFFEBF5EE);
-      bgGradientEnd = const Color(0xFFD7EADC);
+      bgGradientStart = isDark ? const Color(0xFF242F2A) : const Color(0xFFEBF5EE);
+      bgGradientEnd = isDark ? const Color(0xFF1A2420) : const Color(0xFFD7EADC);
     } else if (dishLower.contains('paneer') || cuisineLower.contains('north') || dishLower.contains('masala')) {
       emoji = '🥘';
-      bgGradientStart = const Color(0xFFFCF1E6);
-      bgGradientEnd = const Color(0xFFF6DFC8);
+      bgGradientStart = isDark ? const Color(0xFF2D2A32) : const Color(0xFFFCF1E6);
+      bgGradientEnd = isDark ? const Color(0xFF211E26) : const Color(0xFFF6DFC8);
     } else if (dishLower.contains('biryani') || dishLower.contains('pulao') || dishLower.contains('rice')) {
       emoji = '🍚';
-      bgGradientStart = const Color(0xFFFBF7EA);
-      bgGradientEnd = const Color(0xFFF4E8CA);
+      bgGradientStart = isDark ? const Color(0xFF2D2C32) : const Color(0xFFFBF7EA);
+      bgGradientEnd = isDark ? const Color(0xFF212026) : const Color(0xFFF4E8CA);
     } else if (dishLower.contains('dosa') || dishLower.contains('roti') || dishLower.contains('paratha')) {
       emoji = '🥞';
-      bgGradientStart = const Color(0xFFFAF2E8);
-      bgGradientEnd = const Color(0xFFEFE1D0);
+      bgGradientStart = isDark ? const Color(0xFF2D2A30) : const Color(0xFFFAF2E8);
+      bgGradientEnd = isDark ? const Color(0xFF211E24) : const Color(0xFFEFE1D0);
     } else if (dishLower.contains('dal') || dishLower.contains('chole')) {
       emoji = '🫕';
-      bgGradientStart = const Color(0xFFFCF6E8);
-      bgGradientEnd = const Color(0xFFF7EAC9);
+      bgGradientStart = isDark ? const Color(0xFF2D2C34) : const Color(0xFFFCF6E8);
+      bgGradientEnd = isDark ? const Color(0xFF212028) : const Color(0xFFF7EAC9);
     }
 
     return Container(

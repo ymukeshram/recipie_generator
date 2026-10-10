@@ -173,6 +173,8 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: AppColors.bg(context),
       appBar: AppBar(
@@ -199,14 +201,14 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Quick Prompts & Ideas',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text(context)),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Tap any tag to instantly configure your recipe request',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: AppColors.subtext(context)),
                   ),
                   const SizedBox(height: 10),
                   Wrap(
@@ -222,16 +224,18 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            color: isSelected ? Colors.white : AppColors.text(context),
                           ),
                         ),
-                        backgroundColor: AppColors.surface,
-                        selectedColor: AppColors.textPrimary,
+                        backgroundColor: AppColors.cardBg(context),
+                        selectedColor: isDark ? AppColors.accent : AppColors.textPrimary,
                         checkmarkColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),
                           side: BorderSide(
-                            color: isSelected ? AppColors.textPrimary : AppColors.border,
+                            color: isSelected
+                                ? (isDark ? AppColors.accent : AppColors.textPrimary)
+                                : AppColors.cardBorder(context),
                             width: isSelected ? 1.5 : 1,
                           ),
                         ),
@@ -244,70 +248,79 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
               const SizedBox(height: 18),
 
               // Dish Name Input
-              const Text(
+              Text(
                 'Dish Name or Cooking Idea',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text(context)),
               ),
               const SizedBox(height: 6),
               TextField(
                 controller: _dishNameController,
+                style: TextStyle(color: AppColors.text(context), fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'e.g., Dal Tadka, Aloo Paratha, Chicken Curry...',
-                  prefixIcon: const Icon(Icons.restaurant_menu_rounded, color: AppColors.textSecondary, size: 20),
+                  hintStyle: TextStyle(color: AppColors.subtext(context), fontSize: 13),
+                  prefixIcon: Icon(Icons.restaurant_menu_rounded, color: AppColors.subtext(context), size: 20),
                   filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  fillColor: AppColors.cardBg(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.cardBorder(context))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.cardBorder(context))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? AppColors.accent : AppColors.textPrimary, width: 1.5)),
                 ),
               ),
               const SizedBox(height: 16),
 
               // Available Ingredients
-              const Text(
+              Text(
                 'Available Ingredients in Kitchen',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text(context)),
               ),
               const SizedBox(height: 6),
               TextField(
                 controller: _ingredientsController,
                 maxLines: 2,
+                style: TextStyle(color: AppColors.text(context), fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'e.g., Rice, curd, mustard seeds, curry leaves, ginger...',
-                  prefixIcon: const Icon(Icons.kitchen_outlined, color: AppColors.textSecondary, size: 20),
+                  hintStyle: TextStyle(color: AppColors.subtext(context), fontSize: 13),
+                  prefixIcon: Icon(Icons.kitchen_outlined, color: AppColors.subtext(context), size: 20),
                   filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  fillColor: AppColors.cardBg(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.cardBorder(context))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.cardBorder(context))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? AppColors.accent : AppColors.textPrimary, width: 1.5)),
                 ),
               ),
               const SizedBox(height: 16),
 
               // Specific Request
-              const Text(
+              Text(
                 'Specific Prompt or Instructions',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text(context)),
               ),
               const SizedBox(height: 6),
               TextField(
                 controller: _requestPromptController,
                 maxLines: 2,
+                style: TextStyle(color: AppColors.text(context), fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'e.g., "Authentic dhaba style, low oil, ready in under 25 mins"',
-                  prefixIcon: const Icon(Icons.auto_awesome, color: AppColors.textSecondary, size: 20),
+                  hintStyle: TextStyle(color: AppColors.subtext(context), fontSize: 13),
+                  prefixIcon: Icon(Icons.auto_awesome, color: AppColors.subtext(context), size: 20),
                   filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  fillColor: AppColors.cardBg(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.cardBorder(context))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.cardBorder(context))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? AppColors.accent : AppColors.textPrimary, width: 1.5)),
                 ),
               ),
               const SizedBox(height: 20),
 
               // Parameters Section
-              const Divider(color: AppColors.border),
+              Divider(color: AppColors.cardBorder(context)),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Parameters & Indian Preferences',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text(context)),
               ),
               const SizedBox(height: 14),
 
@@ -361,9 +374,9 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: AppColors.cardBg(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: AppColors.cardBorder(context)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -372,18 +385,18 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
                       child: Text(
                         'Servings: $_servings People',
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary),
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.text(context)),
                       ),
                     ),
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.remove_circle_outline, color: AppColors.textPrimary),
+                          icon: Icon(Icons.remove_circle_outline, color: AppColors.text(context)),
                           onPressed: _servings > 1 ? () => setState(() => _servings--) : null,
                         ),
-                        Text('$_servings', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
+                        Text('$_servings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.text(context))),
                         IconButton(
-                          icon: const Icon(Icons.add_circle_outline, color: AppColors.textPrimary),
+                          icon: Icon(Icons.add_circle_outline, color: AppColors.text(context)),
                           onPressed: _servings < 12 ? () => setState(() => _servings++) : null,
                         ),
                       ],
@@ -394,26 +407,26 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
               const SizedBox(height: 14),
 
               // Sliders
-              Text('Maximum Cooking Time: $_maxTimeMinutes mins', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+              Text('Maximum Cooking Time: $_maxTimeMinutes mins', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.text(context))),
               Slider(
                 value: _maxTimeMinutes.toDouble(),
                 min: 15,
                 max: 120,
                 divisions: 7,
-                activeColor: AppColors.textPrimary,
-                inactiveColor: AppColors.border,
+                activeColor: isDark ? AppColors.accent : AppColors.textPrimary,
+                inactiveColor: AppColors.cardBorder(context),
                 label: '$_maxTimeMinutes mins',
                 onChanged: (v) => setState(() => _maxTimeMinutes = v.toInt()),
               ),
 
-              Text('Budget Constraint: ₹$_budgetInr', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary)),
+              Text('Budget Constraint: ₹$_budgetInr', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.text(context))),
               Slider(
                 value: _budgetInr.toDouble(),
                 min: 50,
                 max: 1000,
                 divisions: 19,
-                activeColor: AppColors.textPrimary,
-                inactiveColor: AppColors.border,
+                activeColor: isDark ? AppColors.accent : AppColors.textPrimary,
+                inactiveColor: AppColors.cardBorder(context),
                 label: '₹$_budgetInr',
                 onChanged: (v) => setState(() => _budgetInr = v.toInt()),
               ),
@@ -425,9 +438,9 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: AppColors.cardBg(context),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: AppColors.cardBorder(context)),
                   ),
                   child: const Center(
                     child: CulinaryLoadingIndicator(
@@ -440,7 +453,7 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
                 ElevatedButton.icon(
                   onPressed: _handleGenerate,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.textPrimary,
+                    backgroundColor: isDark ? AppColors.accent : AppColors.textPrimary,
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

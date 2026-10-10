@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : mockRecipes.reversed.toList();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
@@ -64,21 +64,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'RasoiAI',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: AppColors.text(context),
                             letterSpacing: -0.4,
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
+                        Text(
                           'Your Indian Cooking Assistant',
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: AppColors.subtext(context),
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -95,11 +95,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             height: 38,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppColors.surface,
-                              border: Border.all(color: AppColors.border),
+                              color: AppColors.cardBg(context),
+                              border: Border.all(color: AppColors.cardBorder(context)),
                             ),
                             child: Center(
-                              child: Icon(Icons.person_outline_rounded, size: 20, color: AppColors.textPrimary),
+                              child: Icon(Icons.person_outline_rounded, size: 20, color: AppColors.text(context)),
                             ),
                           ),
                         ),
@@ -131,9 +131,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: AppColors.cardBg(context),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: AppColors.cardBorder(context)),
                         ),
                         child: Row(
                           children: [
@@ -141,13 +141,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceSubtle,
+                                color: AppColors.subtleBg(context),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.auto_awesome, color: AppColors.textPrimary, size: 22),
+                              child: Icon(Icons.auto_awesome, color: AppColors.text(context), size: 22),
                             ),
                             const SizedBox(width: 14),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -156,18 +156,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.text(context),
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     'Enter dish name, pantry items, or dietary preferences',
-                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    style: TextStyle(fontSize: 12, color: AppColors.subtext(context)),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textTertiary),
+                            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.subtext(context)),
                           ],
                         ),
                       ),
@@ -181,9 +181,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: AppColors.cardBg(context),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: AppColors.cardBorder(context)),
                         ),
                         child: Row(
                           children: [
@@ -191,13 +191,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: AppColors.surfaceSubtle,
+                                color: AppColors.subtleBg(context),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.camera_alt_outlined, color: AppColors.textPrimary, size: 22),
+                              child: Icon(Icons.camera_alt_outlined, color: AppColors.text(context), size: 22),
                             ),
                             const SizedBox(width: 14),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -206,18 +206,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.text(context),
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     'Take or upload a picture to get an authentic recipe',
-                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    style: TextStyle(fontSize: 12, color: AppColors.subtext(context)),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textTertiary),
+                            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.subtext(context)),
                           ],
                         ),
                       ),
@@ -234,9 +234,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Regional Cuisines',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text(context)),
                     ),
                     if (_selectedCuisine != 'All')
                       GestureDetector(
@@ -244,16 +244,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppColors.surfaceSubtle,
+                            color: AppColors.subtleBg(context),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(color: AppColors.cardBorder(context)),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Reset Filter', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                              SizedBox(width: 3),
-                              Icon(Icons.close_rounded, size: 12, color: AppColors.textSecondary),
+                              Text('Reset Filter', style: TextStyle(fontSize: 11, color: AppColors.subtext(context))),
+                              const SizedBox(width: 3),
+                              Icon(Icons.close_rounded, size: 12, color: AppColors.subtext(context)),
                             ],
                           ),
                         ),
@@ -273,6 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemBuilder: (context, index) {
                     final cuisine = _cuisines[index];
                     final isSelected = cuisine == _selectedCuisine;
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
                     return GestureDetector(
                       onTap: () {
                         setState(() {
@@ -283,10 +284,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.textPrimary : AppColors.surface,
+                          color: isSelected
+                              ? (isDark ? AppColors.accent : AppColors.textPrimary)
+                              : AppColors.cardBg(context),
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: isSelected ? AppColors.textPrimary : AppColors.border,
+                            color: isSelected
+                                ? (isDark ? AppColors.accent : AppColors.textPrimary)
+                                : AppColors.cardBorder(context),
                             width: isSelected ? 1.5 : 1,
                           ),
                           boxShadow: isSelected
@@ -304,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            color: isSelected ? Colors.white : AppColors.text(context),
                           ),
                         ),
                       ),
@@ -323,13 +328,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Text(
                       _selectedCuisine == 'All' ? 'Popular Indian Dishes' : '$_selectedCuisine Specialties',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text(context)),
                     ),
                     GestureDetector(
-                      onTap: () => context.go('/explore'),
-                      child: const Text(
+                      onTap: () => context.go('/profile'),
+                      child: Text(
                         'See all',
-                        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500, fontSize: 13),
+                        style: TextStyle(color: AppColors.subtext(context), fontWeight: FontWeight.w500, fontSize: 13),
                       ),
                     ),
                   ],
@@ -367,13 +372,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Text(
                       _selectedCuisine == 'All' ? 'Recommended for You' : 'More $_selectedCuisine Recipes',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text(context)),
                     ),
                     GestureDetector(
-                      onTap: () => context.go('/explore'),
-                      child: const Text(
+                      onTap: () => context.go('/profile'),
+                      child: Text(
                         'See all',
-                        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500, fontSize: 13),
+                        style: TextStyle(color: AppColors.subtext(context), fontWeight: FontWeight.w500, fontSize: 13),
                       ),
                     ),
                   ],

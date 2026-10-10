@@ -12,7 +12,7 @@ class MainScaffold extends StatelessWidget {
     final String location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/generate/photo')) return 2;
     if (location.startsWith('/generate')) return 1;
-    if (location.startsWith('/explore')) return 3;
+    if (location.startsWith('/profile')) return 3;
     if (location.startsWith('/saved')) return 4;
     if (location.startsWith('/home') || location.startsWith('/recipe')) return 0;
     return 0;
@@ -30,7 +30,7 @@ class MainScaffold extends StatelessWidget {
         context.go('/generate/photo'); // Direct Camera Snap screen
         break;
       case 3:
-        context.go('/explore'); // Explore regional
+        context.go('/profile'); // User Profile & Gamification
         break;
       case 4:
         context.go('/saved'); // Saved & favorites
@@ -84,9 +84,9 @@ class MainScaffold extends StatelessWidget {
 
                 _buildTab(
                   context: context,
-                  icon: Icons.explore_outlined,
-                  activeIcon: Icons.explore_rounded,
-                  label: 'Explore',
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Profile',
                   isSelected: selectedIndex == 3,
                   onTap: () => _onItemTapped(3, context),
                 ),
