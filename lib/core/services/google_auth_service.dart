@@ -16,6 +16,8 @@ class GoogleAuthService {
     scopes: ['email', 'profile'],
   );
 
+  static VoidCallback? onAuthSuccessCallback;
+
   static Future<void> load() async {
     try {
       final saved = await _storage.read(key: _clientIdKey);
@@ -30,6 +32,7 @@ class GoogleAuthService {
               ? account.displayName!
               : UserSession.deriveNameFromEmail(account.email);
           await UserSession.setSession(name: displayName, email: account.email);
+          onAuthSuccessCallback?.call();
         }
       });
 
@@ -50,6 +53,7 @@ class GoogleAuthService {
     required BuildContext context,
     required VoidCallback onSuccess,
   }) async {
+    onAuthSuccessCallback = onSuccess;
     try {
       final account = await _googleSignIn.signIn();
       if (account != null) {
@@ -67,15 +71,9 @@ class GoogleAuthService {
           );
           onSuccess();
         }
-        return;
       }
     } catch (e) {
       debugPrint('GoogleSignIn exception: $e');
-    }
-
-    // Fallback confirmation sheet if popup was closed or origin mismatch
-    if (context.mounted) {
-      promptGoogleSignIn(context: context, onSuccess: onSuccess);
     }
   }
 
