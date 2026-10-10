@@ -24,13 +24,36 @@ class _SignupScreenState extends State<SignupScreen> {
   void _handleSignup() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
-      await UserSession.setSession(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
+      final name = _nameController.text.trim();
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      final success = await UserSession.registerAccount(
+        name: name,
+        email: email,
+        password: password,
       );
-      if (mounted) {
-        setState(() => _isLoading = false);
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Account created! Welcome, $name! 🎉'),
+            backgroundColor: const Color(0xFF16A34A),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
         context.go('/home');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('An account with this email already exists. Please Sign In.'),
+            backgroundColor: Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -154,7 +177,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: () {
-                    GoogleAuthService.promptGoogleSignIn(
+                    GoogleAuthService.signInWithGoogle(
                       context: context,
                       onSuccess: () => context.go('/home'),
                     );

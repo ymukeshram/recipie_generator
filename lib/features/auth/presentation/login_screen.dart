@@ -23,11 +23,37 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
       final email = _emailController.text.trim();
-      final derivedName = UserSession.deriveNameFromEmail(email);
-      await UserSession.setSession(name: derivedName, email: email);
-      if (mounted) {
-        setState(() => _isLoading = false);
-        context.go('/home');
+      final password = _passwordController.text;
+
+      final result = await UserSession.validateCredentials(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result.isValid) {
+        final name = result.name ?? UserSession.deriveNameFromEmail(email);
+        await UserSession.setSession(name: name, email: email);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Welcome back, $name! 👋'),
+              backgroundColor: const Color(0xFF16A34A),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          context.go('/home');
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.error ?? 'Invalid email or password.'),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -162,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
                           onPressed: () {
-                            GoogleAuthService.promptGoogleSignIn(
+                            GoogleAuthService.signInWithGoogle(
                               context: context,
                               onSuccess: () => context.go('/home'),
                             );

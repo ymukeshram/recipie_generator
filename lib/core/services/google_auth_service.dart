@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rasoiai/core/theme/app_colors.dart';
 import 'package:rasoiai/core/services/user_session.dart';
 
@@ -9,12 +11,17 @@ class GoogleAuthService {
 
   // Configured Google OAuth Web Client ID
   static String? clientId = '2574068206-h8e0p4hih8ken82vcija66emko1jm6gn.apps.googleusercontent.com';
+  static bool _isSdkInitialized = false;
 
   static Future<void> load() async {
     try {
       final saved = await _storage.read(key: _clientIdKey);
       if (saved != null && saved.trim().isNotEmpty) {
         clientId = saved.trim();
+      }
+      if (!_isSdkInitialized) {
+        await GoogleSignIn.instance.initialize(clientId: clientId);
+        _isSdkInitialized = true;
       }
     } catch (_) {}
   }
@@ -24,6 +31,45 @@ class GoogleAuthService {
     try {
       await _storage.write(key: _clientIdKey, value: clientId);
     } catch (_) {}
+  }
+
+  /// Triggers real Google OAuth Sign In flow with fallback modal if browser popups/origins are unconfigured
+  static Future<void> signInWithGoogle({
+    required BuildContext context,
+    required VoidCallback onSuccess,
+  }) async {
+    try {
+      if (!_isSdkInitialized) {
+        await GoogleSignIn.instance.initialize(clientId: clientId);
+        _isSdkInitialized = true;
+      }
+      final account = await GoogleSignIn.instance.authenticate(scopeHint: ['email', 'profile']);
+      final displayName = account.displayName?.trim().isNotEmpty == true
+          ? account.displayName!
+          : UserSession.deriveNameFromEmail(account.email);
+      await UserSession.setSession(
+        name: displayName,
+        email: account.email,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome, $displayName! Signed in with Google. ✅'),
+            backgroundColor: const Color(0xFF1E8E3E),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        onSuccess();
+      }
+      return;
+    } catch (e) {
+      debugPrint('Real GoogleSignIn exception: $e. Falling back to confirm modal.');
+    }
+
+    // If popup is closed or origin is localhost without Google Console origin whitelist, show the interactive confirm sheet
+    if (context.mounted) {
+      promptGoogleSignIn(context: context, onSuccess: onSuccess);
+    }
   }
 
   static void promptGoogleSignIn({
