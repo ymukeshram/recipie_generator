@@ -91,6 +91,8 @@
     <div class="splash-spinner"></div>
   </div>
   <script>
+    var GOOGLE_CLIENT_ID = '2574068206-h8e0p4hih8ken82vcija66emko1jm6gn.apps.googleusercontent.com';
+
     window.onGoogleAuthSuccess = function(credential) {
       if (!credential) return;
       try {
@@ -100,11 +102,59 @@
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
         var data = JSON.parse(jsonPayload);
-        window.dispatchEvent(new CustomEvent('rasoiai_google_auth', { detail: data }));
+        console.log('[RasoiAI] Decoded Google JWT credential:', data.email);
+        window.dispatchEvent(new CustomEvent('rasoiai_google_auth', { detail: JSON.stringify(data) }));
       } catch (e) {
         console.error('Error decoding Google JWT credential:', e);
       }
     };
+
+    window.rasoiGoogleSignIn = function() {
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        console.warn('[RasoiAI] Google accounts script still loading, retrying in 300ms...');
+        setTimeout(window.rasoiGoogleSignIn, 300);
+        return;
+      }
+      try {
+        var tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'email profile openid',
+          prompt: 'select_account',
+          callback: function(tokenResponse) {
+            if (tokenResponse && tokenResponse.access_token) {
+              console.log('[RasoiAI] Received Google access token, fetching userinfo...');
+              fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { 'Authorization': 'Bearer ' + tokenResponse.access_token }
+              })
+              .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+              })
+              .then(function(userInfo) {
+                console.log('[RasoiAI] User info retrieved successfully:', userInfo.email);
+                window.dispatchEvent(new CustomEvent('rasoiai_google_auth', {
+                  detail: JSON.stringify(userInfo)
+                }));
+              })
+              .catch(function(err) {
+                console.error('[RasoiAI] Failed to fetch Google user info:', err);
+              });
+            } else if (tokenResponse && tokenResponse.error) {
+              console.warn('[RasoiAI] Google OAuth token response error:', tokenResponse.error);
+            }
+          }
+        });
+        tokenClient.requestAccessToken({ prompt: 'select_account' });
+      } catch (err) {
+        console.error('[RasoiAI] Failed to initiate Google Sign In:', err);
+      }
+    };
+
+    // Listen for requests from Flutter
+    window.addEventListener('rasoi_request_google_signin', function() {
+      console.log('[RasoiAI] Received rasoi_request_google_signin from Flutter');
+      window.rasoiGoogleSignIn();
+    });
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
