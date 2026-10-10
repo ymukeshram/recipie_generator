@@ -109,7 +109,7 @@ class _PhotoRecipeGenerationScreenState extends State<PhotoRecipeGenerationScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
         title: const Text('Identify Dish from Photo'),
         leading: IconButton(
@@ -136,9 +136,9 @@ class _PhotoRecipeGenerationScreenState extends State<PhotoRecipeGenerationScree
                   Container(
                     height: 240,
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: AppColors.cardBg(context),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: AppColors.cardBorder(context)),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: _selectedImage != null

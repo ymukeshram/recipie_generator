@@ -75,7 +75,7 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.warmIvory,
+      backgroundColor: AppColors.bg(context),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -179,13 +179,13 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceSubtle,
+                          color: AppColors.subtleBg(context),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: AppColors.cardBorder(context)),
                         ),
                         child: Text(
                           _recipe.mealCategory,
-                          style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 12),
+                          style: TextStyle(color: AppColors.text(context), fontWeight: FontWeight.w600, fontSize: 12),
                         ),
                       ),
                       const Spacer(),
@@ -299,13 +299,13 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
                         secondary: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.warmIvory,
+                            color: AppColors.subtleBg(context),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppColors.dividerGray),
+                            border: Border.all(color: AppColors.cardBorder(context)),
                           ),
                           child: Text(
                             '$scaledQty ${ing.unit}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.text(context)),
                           ),
                         ),
                         onChanged: (val) {

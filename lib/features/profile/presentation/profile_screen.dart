@@ -469,14 +469,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.warmIvory,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: const Text('Profile & Preferences'),
+        title: Text(
+          'Profile & Preferences',
+          style: TextStyle(
+            color: AppColors.text(context),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           const ThemeToggleButton(),
           IconButton(
-            icon: const Icon(Icons.history),
+            icon: Icon(Icons.history, color: AppColors.text(context)),
             tooltip: 'Recipe History',
             onPressed: () => context.push('/history'),
           ),
@@ -489,20 +497,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Chef Profile Section
-              const Text(
+              Text(
                 'Chef',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text(context)),
               ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardBg(context),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: AppColors.cardBorder(context)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -510,10 +518,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 28,
-                      backgroundColor: AppColors.accentLight,
-                      child: Text('👨‍🍳', style: TextStyle(fontSize: 26)),
+                      backgroundColor: isDark ? const Color(0xFF1E2E25) : AppColors.accentLight,
+                      child: const Text('👨‍🍳', style: TextStyle(fontSize: 26)),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -522,12 +530,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Text(
                             UserSession.userName,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppColors.textPrimary),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppColors.text(context)),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             UserSession.userEmail,
-                            style: const TextStyle(color: AppColors.neutralGray, fontSize: 13),
+                            style: TextStyle(color: AppColors.subtext(context), fontSize: 13),
                           ),
                         ],
                       ),
@@ -536,6 +544,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         minimumSize: Size.zero,
+                        side: BorderSide(color: AppColors.cardBorder(context)),
+                        foregroundColor: AppColors.text(context),
                       ),
                       onPressed: _showEditChefDialog,
                       child: const Text('Edit', style: TextStyle(fontSize: 12)),
@@ -582,9 +592,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.cardBg(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: AppColors.cardBorder(context)),
                 ),
                 child: Row(
                   children: [
@@ -594,11 +604,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('AI Backend Connection', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text('AI Backend Connection', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.text(context))),
                           const SizedBox(height: 1),
                           Text(
                             ApiClient.baseUrl,
-                            style: const TextStyle(fontSize: 11, color: AppColors.neutralGray),
+                            style: TextStyle(fontSize: 11, color: AppColors.subtext(context)),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -618,40 +628,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: AppColors.cardBg(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: AppColors.cardBorder(context)),
                 ),
                 child: ValueListenableBuilder<ThemeMode>(
                   valueListenable: themeService.themeModeNotifier,
                   builder: (context, mode, _) {
-                    final isDark = mode == ThemeMode.dark;
+                    final currentIsDark = mode == ThemeMode.dark;
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [
                             Icon(
-                              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                              color: isDark ? const Color(0xFFFBBF24) : AppColors.accent,
+                              currentIsDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                              color: currentIsDark ? const Color(0xFFFBBF24) : AppColors.accent,
                               size: 22,
                             ),
                             const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Dark Mode', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text('Dark Mode', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.text(context))),
                                 const SizedBox(height: 1),
                                 Text(
-                                  isDark ? 'Dark theme enabled' : 'Clean light theme enabled',
-                                  style: const TextStyle(fontSize: 11, color: AppColors.neutralGray),
+                                  currentIsDark ? 'Dark theme enabled' : 'Clean light theme enabled',
+                                  style: TextStyle(fontSize: 11, color: AppColors.subtext(context)),
                                 ),
                               ],
                             ),
                           ],
                         ),
                         Switch(
-                          value: isDark,
+                          value: currentIsDark,
                           activeColor: AppColors.accent,
                           onChanged: (_) => themeService.toggleTheme(),
                         ),
@@ -662,29 +672,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 20),
 
-              Text('Culinary Profile', style: Theme.of(context).textTheme.titleLarge),
+              Text('Culinary Profile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.text(context))),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'These preferences will automatically configure every AI-generated recipe.',
-                style: TextStyle(color: AppColors.neutralGray, fontSize: 12),
+                style: TextStyle(color: AppColors.subtext(context), fontSize: 12),
               ),
               const SizedBox(height: 16),
 
               // Diet Preference
-              const Text('Dietary Choice', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              const SizedBox(height: 8),
+              Text('Dietary Choice', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.text(context))),
+              const SizedBox(height: 10),
               Wrap(
-                spacing: 8,
+                spacing: 10,
+                runSpacing: 10,
                 children: ['Vegetarian', 'Vegan', 'Eggetarian', 'Non-Vegetarian'].map((diet) {
                   final isSelected = _dietaryPreference == diet;
                   return ChoiceChip(
-                    label: Text(diet),
+                    showCheckmark: false,
+                    avatar: isSelected
+                        ? const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white)
+                        : null,
+                    label: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Text(diet),
+                    ),
                     selected: isSelected,
-                    selectedColor: AppColors.terracotta,
-                    backgroundColor: Colors.white,
+                    selectedColor: AppColors.accent,
+                    backgroundColor: AppColors.cardBg(context),
+                    side: BorderSide(
+                      color: isSelected ? AppColors.accent : AppColors.cardBorder(context),
+                      width: 1,
+                    ),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : AppColors.darkCharcoal,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? Colors.white : AppColors.text(context),
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontSize: 13,
                     ),
                     onSelected: (val) {
                       setState(() => _dietaryPreference = diet);
@@ -696,23 +719,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
 
               // Preferred Cuisines
-              const Text('Preferred Regional Cuisines', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              const SizedBox(height: 8),
+              Text('Preferred Regional Cuisines', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.text(context))),
+              const SizedBox(height: 10),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 10,
+                runSpacing: 10,
                 children: [
                   ..._preferredCuisines.map((c) {
                     final isSelected = _selectedCuisines.contains(c);
                     return FilterChip(
-                      label: Text(c),
+                      showCheckmark: false,
+                      avatar: isSelected
+                          ? const Icon(Icons.check_circle_rounded, size: 16, color: Colors.white)
+                          : null,
+                      label: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Text(c),
+                      ),
                       selected: isSelected,
                       selectedColor: AppColors.accent,
-                      backgroundColor: Colors.white,
-                      checkmarkColor: Colors.white,
+                      backgroundColor: AppColors.cardBg(context),
+                      side: BorderSide(
+                        color: isSelected ? AppColors.accent : AppColors.cardBorder(context),
+                        width: 1,
+                      ),
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.darkCharcoal,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? Colors.white : AppColors.text(context),
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontSize: 13,
                       ),
                       onSelected: (val) {
                         setState(() {
@@ -727,10 +761,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   }),
                   ActionChip(
-                    avatar: const Icon(Icons.add, size: 16, color: AppColors.accent),
-                    label: const Text('Add', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
-                    backgroundColor: AppColors.accentLight,
-                    side: const BorderSide(color: AppColors.accent, width: 1),
+                    avatar: Icon(Icons.add, size: 16, color: isDark ? const Color(0xFF6EE7B7) : AppColors.accent),
+                    label: Text(
+                      'Add',
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFF6EE7B7) : AppColors.accent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    backgroundColor: isDark ? const Color(0xFF1B382B) : AppColors.accentLight,
+                    side: BorderSide(color: isDark ? const Color(0xFF2D6A4F) : AppColors.accent, width: 1),
                     onPressed: _showAddCuisineDialog,
                   ),
                 ],
@@ -738,24 +779,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
 
               // Food Allergies & Exclusions
-              const Text('Allergies & Exclusions (Strict Exclusion)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.errorRed)),
-              const SizedBox(height: 8),
+              Text(
+                'Allergies & Exclusions (Strict Exclusion)',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: isDark ? const Color(0xFFF87171) : AppColors.errorRed,
+                ),
+              ),
+              const SizedBox(height: 10),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 10,
+                runSpacing: 10,
                 children: [
                   ..._allergies.map((all) {
                     final isSelected = _selectedAllergies.contains(all);
                     return FilterChip(
-                      label: Text(all),
+                      showCheckmark: false,
+                      avatar: isSelected
+                          ? Icon(Icons.cancel_rounded, size: 16, color: isDark ? Colors.white : AppColors.errorRed)
+                          : null,
+                      label: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Text(all),
+                      ),
                       selected: isSelected,
-                      selectedColor: Colors.red.shade100,
-                      backgroundColor: Colors.white,
-                      checkmarkColor: AppColors.errorRed,
+                      selectedColor: isDark ? const Color(0xFF5C1D1D) : Colors.red.shade100,
+                      backgroundColor: AppColors.cardBg(context),
+                      side: BorderSide(
+                        color: isSelected ? AppColors.errorRed : AppColors.cardBorder(context),
+                        width: 1,
+                      ),
                       labelStyle: TextStyle(
-                        color: isSelected ? AppColors.errorRed : AppColors.darkCharcoal,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? (isDark ? Colors.white : AppColors.errorRed) : AppColors.text(context),
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontSize: 13,
                       ),
                       onSelected: (val) {
                         setState(() {
@@ -772,7 +830,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ActionChip(
                     avatar: const Icon(Icons.add, size: 16, color: AppColors.errorRed),
                     label: const Text('Add', style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 13)),
-                    backgroundColor: const Color(0xFFFFEBEE),
+                    backgroundColor: isDark ? const Color(0xFF3B1212) : const Color(0xFFFFEBEE),
                     side: const BorderSide(color: AppColors.errorRed, width: 1),
                     onPressed: _showAddAllergyDialog,
                   ),
@@ -784,9 +842,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Spice Tolerance', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Spice Tolerance', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text(context))),
                   DropdownButton<String>(
                     value: _spiceTolerance,
+                    dropdownColor: AppColors.cardBg(context),
+                    style: TextStyle(color: AppColors.text(context), fontSize: 14),
                     items: ['Mild', 'Medium', 'Spicy', 'Extra Spicy']
                         .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                         .toList(),
@@ -796,18 +856,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
 
-              Text('Typical Cooking Time: $_typicalCookingTime mins', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('Typical Cooking Time: $_typicalCookingTime mins', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text(context))),
               Slider(
                 value: _typicalCookingTime.toDouble(),
                 min: 15,
                 max: 90,
                 divisions: 5,
-                activeColor: AppColors.terracotta,
+                activeColor: AppColors.accent,
                 label: '$_typicalCookingTime mins',
                 onChanged: (v) => setState(() => _typicalCookingTime = v.toInt()),
               ),
 
-              Text('Target Budget Per Meal: ₹$_budgetPerMeal', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text('Target Budget Per Meal: ₹$_budgetPerMeal', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.text(context))),
               Slider(
                 value: _budgetPerMeal.toDouble(),
                 min: 50,
@@ -821,6 +881,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _savePreferences,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Save Culinary Preferences'),
               ),
               const SizedBox(height: 12),
@@ -838,3 +902,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

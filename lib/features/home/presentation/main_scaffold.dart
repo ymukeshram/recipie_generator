@@ -78,6 +78,7 @@ class MainScaffold extends StatelessWidget {
 
                 // Dedicated Direct Camera Snap Action
                 _buildCameraTab(
+                  context: context,
                   isSelected: selectedIndex == 2,
                   onTap: () => _onItemTapped(2, context),
                 ),
@@ -143,9 +144,12 @@ class MainScaffold extends StatelessWidget {
   }
 
   Widget _buildCameraTab({
+    required BuildContext context,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -157,13 +161,15 @@ class MainScaffold extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.textPrimary : AppColors.surfaceSubtle,
+                color: isSelected
+                    ? (isDark ? AppColors.accent : AppColors.textPrimary)
+                    : (isDark ? const Color(0xFF262A32) : AppColors.surfaceSubtle),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 Icons.photo_camera_outlined,
                 size: 20,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
+                color: isSelected ? Colors.white : AppColors.text(context),
               ),
             ),
             const SizedBox(height: 3),
@@ -172,7 +178,7 @@ class MainScaffold extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                color: isSelected ? AppColors.text(context) : AppColors.subtext(context),
               ),
             ),
           ],

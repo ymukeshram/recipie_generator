@@ -118,7 +118,7 @@ class _RecipeCustomizationScreenState extends State<RecipeCustomizationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
         title: const Text('Customize Recipe with AI'),
         leading: IconButton(

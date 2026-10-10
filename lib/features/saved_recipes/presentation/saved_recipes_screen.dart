@@ -26,15 +26,21 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: const Text('Saved Recipes'),
+        title: Text(
+          'Saved Recipes',
+          style: TextStyle(
+            color: AppColors.text(context),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           const ThemeToggleButton(),
           IconButton(
             icon: Icon(
               _showFavoritesOnly ? Icons.favorite : Icons.favorite_border,
-              color: _showFavoritesOnly ? AppColors.errorRed : AppColors.textPrimary,
+              color: _showFavoritesOnly ? AppColors.errorRed : AppColors.text(context),
             ),
             tooltip: _showFavoritesOnly ? 'Show All Saved' : 'Filter Favorites Only',
             onPressed: () {
@@ -52,23 +58,35 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: TextField(
                   controller: _searchController,
+                  style: TextStyle(color: AppColors.text(context), fontSize: 14),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Search your saved recipes...',
-                    prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                    hintStyle: TextStyle(color: AppColors.subtext(context), fontSize: 14),
+                    prefixIcon: Icon(Icons.search, color: AppColors.subtext(context), size: 20),
                     filled: true,
-                    fillColor: AppColors.surface,
+                    fillColor: AppColors.cardBg(context),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18, color: AppColors.textSecondary),
+                            icon: Icon(Icons.clear, size: 18, color: AppColors.subtext(context)),
                             onPressed: () {
                               _searchController.clear();
                               setState(() {});
                             },
                           )
                         : null,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.cardBorder(context)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.cardBorder(context)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+                    ),
                   ),
                 ),
               ),
@@ -100,7 +118,11 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                                 _showFavoritesOnly
                                     ? 'No favorite recipes marked yet'
                                     : (allSaved.isEmpty ? 'No saved recipes yet' : 'No matching recipes found'),
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: AppColors.text(context),
+                                ),
                               ),
                               const SizedBox(height: 6),
                               Text(
@@ -108,13 +130,13 @@ class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
                                     ? 'Tap the heart icon on any recipe to add it to your favorites.'
                                     : 'Save recipes from Home, Explore, or Generate with AI to access them offline anytime.',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                style: TextStyle(color: AppColors.subtext(context), fontSize: 13),
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton(
                                 onPressed: () => context.go('/explore'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.textPrimary,
+                                  backgroundColor: AppColors.accent,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),

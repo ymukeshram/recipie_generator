@@ -48,9 +48,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final results = _filteredRecipes;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
-        title: const Text('Explore Indian Recipes'),
+        title: Text(
+          'Explore Indian Recipes',
+          style: TextStyle(
+            color: AppColors.text(context),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: const [
           ThemeToggleButton(),
         ],
@@ -65,23 +71,35 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: TextField(
                   controller: _searchController,
+                  style: TextStyle(color: AppColors.text(context), fontSize: 14),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Search dishes (e.g. Paneer, Biryani, Dosa)',
+                    hintStyle: TextStyle(color: AppColors.subtext(context), fontSize: 14),
                     filled: true,
-                    fillColor: AppColors.surface,
-                    prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                    fillColor: AppColors.cardBg(context),
+                    prefixIcon: Icon(Icons.search, color: AppColors.subtext(context), size: 20),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18, color: AppColors.textSecondary),
+                            icon: Icon(Icons.clear, size: 18, color: AppColors.subtext(context)),
                             onPressed: () {
                               _searchController.clear();
                               setState(() {});
                             },
                           )
                         : null,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.cardBorder(context)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.cardBorder(context)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+                    ),
                   ),
                 ),
               ),
@@ -102,16 +120,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.textPrimary : AppColors.surface,
+                          color: isSelected ? AppColors.accent : AppColors.cardBg(context),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: isSelected ? AppColors.textPrimary : AppColors.border),
+                          border: Border.all(
+                            color: isSelected ? AppColors.accent : AppColors.cardBorder(context),
+                          ),
                         ),
                         child: Text(
                           c,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                            color: isSelected ? Colors.white : AppColors.text(context),
                           ),
                         ),
                       ),
@@ -130,18 +150,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           children: [
                             const Text('🔍', style: TextStyle(fontSize: 42)),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               'No Indian recipes found matching filters',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: AppColors.text(context),
                               ),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
+                            Text(
                               'Try clearing your search or switching regional cuisine.',
-                              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                              style: TextStyle(color: AppColors.subtext(context), fontSize: 13),
                             ),
                             const SizedBox(height: 16),
                             OutlinedButton(
@@ -152,10 +172,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 });
                               },
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.border),
+                                side: BorderSide(color: AppColors.cardBorder(context)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
-                              child: const Text('Reset Filters', style: TextStyle(color: AppColors.textPrimary)),
+                              child: Text('Reset Filters', style: TextStyle(color: AppColors.text(context))),
                             ),
                           ],
                         ),
