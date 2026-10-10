@@ -476,9 +476,11 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
     required Widget first,
     required Widget second,
   }) {
-    // Responsive: stack vertically on narrow screens (< 360dp) to prevent horizontal cramping;
-    // otherwise arrange side-by-side in a balanced Row with Expanded and consistent 12px gap.
-    if (constraints.maxWidth < 360) {
+    // Responsive: On small phone displays (< 460dp available width), stack the fields vertically
+    // to give each dropdown the full comfortable width and prevent any RenderFlex overflow.
+    // On wider screens (>= 460dp), layout side-by-side in a Row with both wrapped in Expanded
+    // and a balanced 12px horizontal gap.
+    if (constraints.maxWidth < 460) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -528,13 +530,13 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
           icon: Icon(
             Icons.arrow_drop_down,
             color: AppColors.subtext(context),
-            size: 22,
+            size: 20,
           ),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.cardBg(context),
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.cardBorder(context)),
@@ -545,22 +547,20 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.text(context), width: 1.5),
+              borderSide: BorderSide(color: AppColors.accent, width: 1.5),
             ),
           ),
           selectedItemBuilder: (BuildContext ctx) {
             return items.map((String item) {
-              return Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  item,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.text(ctx),
-                  ),
+              return Text(
+                item,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.text(ctx),
                 ),
               );
             }).toList();
@@ -572,6 +572,7 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
                 item,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                softWrap: false,
                 style: TextStyle(
                   fontSize: 13,
                   color: AppColors.text(context),

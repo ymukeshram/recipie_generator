@@ -45,49 +45,58 @@ class CookingStreakCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF332014) : const Color(0xFFFFF3EB),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF332014) : const Color(0xFFFFF3EB),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Text('🔥', style: TextStyle(fontSize: 24)),
                     ),
-                    child: const Text('🔥', style: TextStyle(fontSize: 24)),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '${state.currentStreak}',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.text(context),
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                '${state.currentStreak}',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.text(context),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  state.currentStreak == 1 ? 'Day Streak' : 'Days Streak',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFFE65100), // Vibrant Flame Orange
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 6),
                           Text(
-                            state.currentStreak == 1 ? 'Day Streak' : 'Days Streak',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFFE65100), // Vibrant Flame Orange
-                            ),
+                            'Personal Best: ${state.longestStreak} days',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 12, color: AppColors.subtext(context)),
                           ),
                         ],
                       ),
-                      Text(
-                        'Personal Best: ${state.longestStreak} days',
-                        style: TextStyle(fontSize: 12, color: AppColors.subtext(context)),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
@@ -170,10 +179,14 @@ class CookingStreakCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Next Milestone: $nextMilestone Days 🔥',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.text(context)),
+              Flexible(
+                child: Text(
+                  'Next Milestone: $nextMilestone Days 🔥',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.text(context)),
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '${state.currentStreak} / $nextMilestone',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.subtext(context)),
@@ -238,20 +251,27 @@ class DailyChallengeCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(challenge.emoji, style: const TextStyle(fontSize: 22)),
-                  const SizedBox(width: 8),
-                  Text(
-                    challenge.title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.text(context),
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(challenge.emoji, style: const TextStyle(fontSize: 22)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        challenge.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.text(context),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -261,6 +281,7 @@ class DailyChallengeCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       challenge.isCompleted ? Icons.check_circle : Icons.stars_rounded,
@@ -308,9 +329,13 @@ class DailyChallengeCard extends StatelessWidget {
                 children: [
                   Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 18),
                   SizedBox(width: 6),
-                  Text(
-                    'Challenge Completed! +100 Points Awarded',
-                    style: TextStyle(color: Color(0xFF065F46), fontWeight: FontWeight.bold, fontSize: 12),
+                  Flexible(
+                    child: Text(
+                      'Challenge Completed! +100 Points Awarded',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Color(0xFF065F46), fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -458,10 +483,15 @@ class BadgesGridSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Achievement Badges 🏆',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.text(context)),
+              Flexible(
+                child: Text(
+                  'Achievement Badges 🏆',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.text(context)),
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '$unlockedCount / ${badges.length} Unlocked',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.subtext(context)),

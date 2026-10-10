@@ -50,6 +50,24 @@ void main() {
     expect(find.text('Regional Cuisine'), findsOneWidget);
   });
 
+  testWidgets('RecipeGenerationScreen renders without overflow on 392px and 412px Android widths', (WidgetTester tester) async {
+    for (final width in [392.0, 412.0, 480.0]) {
+      tester.view.physicalSize = Size(width, 850);
+      tester.view.devicePixelRatio = 1.0;
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: RecipeGenerationScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Regional Cuisine'), findsOneWidget);
+      expect(find.text('Meal Category'), findsOneWidget);
+    }
+  });
+
   testWidgets('SurpriseMeCard renders and shows SPIN THE WHEEL button', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -64,33 +82,39 @@ void main() {
     expect(find.text('SPIN THE WHEEL'), findsOneWidget);
   });
 
-  testWidgets('Profile Gamification widgets render correctly', (WidgetTester tester) async {
-    final mockState = gamificationService.stateNotifier.value ?? GamificationState.initial();
+  testWidgets('Profile Gamification widgets render correctly on narrow screen widths', (WidgetTester tester) async {
+    for (final width in [320.0, 360.0, 392.0, 412.0]) {
+      tester.view.physicalSize = Size(width, 900);
+      tester.view.devicePixelRatio = 1.0;
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: Column(
-              children: [
-                CookingStreakCard(state: mockState),
-                const SizedBox(height: 16),
-                DailyChallengeCard(
-                  challenge: mockState.dailyChallenge,
-                  onAccept: () {},
-                ),
-                const SizedBox(height: 16),
-                BadgesGridSection(badges: mockState.badges),
-              ],
+      final mockState = gamificationService.stateNotifier.value ?? GamificationState.initial();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  CookingStreakCard(state: mockState),
+                  const SizedBox(height: 16),
+                  DailyChallengeCard(
+                    challenge: mockState.dailyChallenge,
+                    onAccept: () {},
+                  ),
+                  const SizedBox(height: 16),
+                  BadgesGridSection(badges: mockState.badges),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.textContaining('Streak'), findsWidgets);
-    expect(find.text(mockState.dailyChallenge.title), findsOneWidget);
-    expect(find.textContaining('Achievement Badges'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Streak'), findsWidgets);
+      expect(find.text(mockState.dailyChallenge.title), findsOneWidget);
+      expect(find.textContaining('Achievement Badges'), findsOneWidget);
+    }
   });
 }
