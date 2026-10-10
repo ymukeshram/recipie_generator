@@ -255,36 +255,29 @@ class RecipeCard extends StatelessWidget {
         children: [
           // Subtle culinary spices background motif
           Opacity(
-            opacity: 0.18,
+            opacity: 0.12,
             child: const Text(
-              '🌿  🌶️  🧄  🧅  🍋',
-              style: TextStyle(fontSize: 18, letterSpacing: 6),
+              '🌿   🌶️   🧄   🧅   🍋',
+              style: TextStyle(fontSize: 16, letterSpacing: 8),
             ),
           ),
-          // Center authentic dish illustration badge
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 38)),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(6),
+          // Culinary circular emblem
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.85),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-                child: Text(
-                  recipe.dishName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Text(emoji, style: const TextStyle(fontSize: 34)),
           ),
         ],
       ),

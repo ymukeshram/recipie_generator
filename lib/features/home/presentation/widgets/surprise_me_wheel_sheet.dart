@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rasoiai/core/theme/app_colors.dart';
 import 'package:rasoiai/core/networking/api_client.dart';
@@ -115,6 +116,7 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
   Recipe? _generatedRecipe;
   bool _isSaved = false;
 
+  static const _storage = FlutterSecureStorage();
   final math.Random _random = math.Random();
 
   @override
@@ -181,59 +183,101 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
   Future<void> _fetchRecipeForSegment(WheelSegment segment) async {
     Recipe? recipe;
 
+    // Read user's dietary and culinary preferences from storage
+    String userDietPref = 'Vegetarian';
+    try {
+      final savedDiet = await _storage.read(key: 'rasoiai_selected_diet');
+      if (savedDiet != null && savedDiet.isNotEmpty) {
+        userDietPref = savedDiet;
+      }
+    } catch (_) {}
+
+    final bool isNonVeg = userDietPref == 'Non-Vegetarian';
+    final bool isEggetarian = userDietPref == 'Eggetarian';
+
+    // Get list of already saved dishes so we NEVER recommend them again
+    final savedDishes = savedRecipesService.savedRecipesNotifier.value;
+    final savedNames = savedDishes.map((r) => r.dishName.trim().toLowerCase()).toSet();
+    final savedIds = savedDishes.map((r) => r.id).toSet();
+
     String targetCuisine = segment.cuisineHint;
     String targetCategory = segment.categoryKey;
     String promptText = 'Surprise me with an authentic, beloved ${segment.label} Indian recipe.';
-    String dietPref = 'Vegetarian';
+    String dietPref = userDietPref;
     int maxTime = 35;
 
     switch (segment.label) {
       case 'High-Protein':
-        targetCuisine = 'North Indian';
+        targetCuisine = isNonVeg ? 'North Indian' : 'North Indian';
         targetCategory = 'Lunch';
-        dietPref = 'High Protein';
-        promptText = 'Authentic high-protein Indian recipe rich in protein (at least 20g protein per serving) such as paneer, soya, dal, chana, or eggs.';
+        dietPref = isNonVeg ? 'Non-Vegetarian' : (isEggetarian ? 'Eggetarian' : 'High Protein');
+        promptText = isNonVeg
+            ? 'Authentic high-protein Indian recipe featuring chicken, mutton, fish, or eggs (at least 28g protein per serving).'
+            : 'Authentic high-protein Indian recipe rich in protein (at least 20g protein per serving) such as paneer, soya, dal, or chana.';
         break;
       case 'Healthy Meals':
         targetCategory = 'Dinner';
-        dietPref = 'Low Calorie';
+        dietPref = isNonVeg ? 'Non-Vegetarian' : 'Low Calorie';
         maxTime = 30;
-        promptText = 'Healthy, light, and nutritious Indian meal under 320 calories with wholesome greens and fiber.';
+        promptText = isNonVeg
+            ? 'Healthy, grilled or light Indian meal with lean chicken, fish, or egg whites under 350 calories.'
+            : 'Healthy, light, and nutritious Indian meal under 320 calories with wholesome greens and fiber.';
         break;
       case 'Quick Meals':
         targetCategory = 'Breakfast';
-        maxTime = 18;
-        promptText = 'Delicious quick Indian meal that can be prepared in under 18 minutes.';
+        maxTime = 20;
+        promptText = (isNonVeg || isEggetarian)
+            ? 'Delicious quick Indian meal with eggs or shredded chicken that can be prepared in under 18 minutes (like Egg Bhurji or Anda Paratha).'
+            : 'Delicious quick Indian meal that can be prepared in under 18 minutes.';
         break;
       case 'Desserts':
         targetCategory = 'Dessert';
         targetCuisine = 'Indian Dessert';
+        dietPref = 'Vegetarian';
         promptText = 'Classic Indian sweet or dessert like Gulab Jamun, Kheer, or Gajar Halwa.';
         break;
       case 'Street Food':
         targetCategory = 'Snacks';
         targetCuisine = 'Street Food';
-        promptText = 'Iconic Indian street food snack like Pav Bhaji, Chaat, or Samosa.';
+        promptText = isNonVeg
+            ? 'Iconic Indian street food snack like Kolkata Chicken Roll, Chicken Momos, or Keema Pav.'
+            : 'Iconic Indian street food snack like Pav Bhaji, Chaat, or Samosa.';
         break;
       case 'Italian Fusion':
         targetCuisine = 'Italian Fusion';
-        promptText = 'Indian-Italian fusion dish like Paneer Tikka Naan Pizza or Makhani Pasta.';
+        promptText = isNonVeg
+            ? 'Indian-Italian fusion dish like Butter Chicken Pizza, Chicken Tikka Pasta, or Kheema Lasagna.'
+            : 'Indian-Italian fusion dish like Paneer Tikka Naan Pizza or Makhani Pasta.';
         break;
       case 'Indo-Chinese':
         targetCuisine = 'Indo-Chinese';
-        promptText = 'Spicy and tangy Indo-Chinese recipe like Veg Manchurian or Chilli Paneer.';
+        promptText = isNonVeg
+            ? 'Spicy and tangy Indo-Chinese recipe like Chilli Chicken, Chicken Manchurian, or Egg Fried Rice.'
+            : 'Spicy and tangy Indo-Chinese recipe like Veg Manchurian or Chilli Paneer.';
         break;
       case 'South Indian':
         targetCuisine = 'South Indian';
-        promptText = 'Traditional authentic South Indian delicacy like Masala Dosa, Idli Sambar, or Uttapam.';
+        promptText = isNonVeg
+            ? 'Traditional authentic South Indian delicacy like Chettinad Pepper Chicken, Meen Curry, or Kozhi Roast.'
+            : 'Traditional authentic South Indian delicacy like Masala Dosa, Idli Sambar, or Uttapam.';
         break;
       case 'North Indian':
         targetCuisine = 'North Indian';
-        promptText = 'Rich North Indian delicacy like Paneer Butter Masala, Dal Makhani, or Chole.';
+        promptText = isNonVeg
+            ? 'Rich North Indian delicacy like Butter Chicken, Chicken Korma, Rogan Josh, or Tariwali Chicken.'
+            : 'Rich North Indian delicacy like Paneer Butter Masala, Dal Makhani, or Chole.';
         break;
       case 'Random Surprise':
-        promptText = 'Chef special signature Indian delicacy.';
+        promptText = isNonVeg
+            ? 'Chef special signature Indian delicacy featuring succulent meat or poultry.'
+            : 'Chef special signature Indian delicacy.';
         break;
+    }
+
+    // Add explicit exclusion instructions to AI prompt so it never returns saved dishes
+    if (savedNames.isNotEmpty) {
+      final excludeListStr = savedDishes.take(8).map((r) => r.dishName).join(', ');
+      promptText += ' Strictly do NOT recommend any of these dishes already known/saved: $excludeListStr.';
     }
 
     // 1. Try real AI backend generation with generous 15-second timeout for accuracy
@@ -247,15 +291,44 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
         maxTimeMinutes: maxTime,
         dietaryPreference: dietPref,
       ).timeout(const Duration(seconds: 15));
+
+      // If AI accidentally generated an already saved dish, discard and use fallback
+      if (recipe != null && (savedNames.contains(recipe.dishName.trim().toLowerCase()) || savedIds.contains(recipe.id))) {
+        recipe = null;
+      }
     } catch (_) {}
 
-    // 2. Strict, 100% accurate fallback matching by category and nutrition
+    // 2. Strict, 100% accurate fallback matching by category, dietary preference, and deduplication
     if (recipe == null) {
       final List<Recipe> matching = mockRecipes.where((r) {
+        // Must NOT be in user's saved/liked list
+        if (savedIds.contains(r.id) || savedNames.contains(r.dishName.trim().toLowerCase())) {
+          return false;
+        }
+
         final label = segment.label.toLowerCase();
         final dish = r.dishName.toLowerCase();
         final cuisine = r.cuisine.toLowerCase();
         final tags = r.dietaryTags.map((t) => t.toLowerCase()).toList();
+
+        // Check non-veg vs veg compatibility
+        if (isNonVeg) {
+          final isDishNonVeg = tags.contains('non-vegetarian') || dish.contains('chicken') || dish.contains('mutton') || dish.contains('egg');
+          // For North/South Indian, Protein, Street Food, prioritize non-veg if available
+          if ((label.contains('north') || label.contains('south') || label.contains('protein')) && !isDishNonVeg) {
+            // Check if there are non-veg matching options before rejecting
+            final hasNonVegOption = mockRecipes.any((other) =>
+                other.dietaryTags.map((t) => t.toLowerCase()).contains('non-vegetarian') &&
+                !savedIds.contains(other.id) &&
+                !savedNames.contains(other.dishName.trim().toLowerCase()));
+            if (hasNonVegOption) return false;
+          }
+        } else if (!isEggetarian) {
+          // Pure Vegetarian / Vegan: strictly exclude non-veg and eggetarian
+          if (tags.contains('non-vegetarian') || tags.contains('eggetarian') || dish.contains('chicken') || dish.contains('egg')) {
+            return false;
+          }
+        }
 
         if (label.contains('protein')) {
           return tags.any((t) => t.contains('protein')) || ((r.nutrition?.proteinG ?? 0) >= 14.0);
@@ -274,7 +347,7 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
         } else if (label.contains('north')) {
           return cuisine.contains('north');
         } else if (label.contains('quick')) {
-          return r.totalTimeMinutes <= 22 || tags.any((t) => t.contains('quick'));
+          return r.totalTimeMinutes <= 25 || tags.any((t) => t.contains('quick'));
         }
         return true;
       }).toList();
@@ -282,7 +355,13 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
       if (matching.isNotEmpty) {
         recipe = matching[_random.nextInt(matching.length)];
       } else {
-        recipe = mockRecipes[_random.nextInt(mockRecipes.length)];
+        // Fallback to any mock recipe not in saved recipes
+        final unsavedMocks = mockRecipes.where((r) => !savedIds.contains(r.id) && !savedNames.contains(r.dishName.trim().toLowerCase())).toList();
+        if (unsavedMocks.isNotEmpty) {
+          recipe = unsavedMocks[_random.nextInt(unsavedMocks.length)];
+        } else {
+          recipe = mockRecipes[_random.nextInt(mockRecipes.length)];
+        }
       }
     }
 
@@ -478,39 +557,112 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
                       ),
                     ),
 
-                  // Recipe Generation Loading
+                  // Recipe Generation Loading with Chef Avatar
                   if (_isGeneratingRecipe)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2835) : const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFF86EFAC)),
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [const Color(0xFF231D19), const Color(0xFF1B1A1E)]
+                              : [const Color(0xFFFFF7ED), const Color(0xFFFEF3C7)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.4) : const Color(0xFFFDBA74),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFD97706).withValues(alpha: 0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
-                          Text(_selectedSegment?.emoji ?? '🍲', style: const TextStyle(fontSize: 24)),
-                          const SizedBox(width: 12),
+                          // Chef Avatar Badge
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFFEA580C), Color(0xFFD97706)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFEA580C).withValues(alpha: 0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text('👨‍🍳', style: TextStyle(fontSize: 30)),
+                              ),
+                              Positioned(
+                                bottom: -2,
+                                right: -2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(_selectedSegment?.emoji ?? '✨', style: const TextStyle(fontSize: 14)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Selected: ${_selectedSegment?.label ?? "Mystery Dish"}!',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Master Chef at Work',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14,
+                                        color: isDark ? const Color(0xFFFDBA74) : const Color(0xFF9A3412),
+                                        letterSpacing: 0.2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Text('🔥', style: TextStyle(fontSize: 13)),
+                                  ],
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 3),
                                 Text(
-                                  'AI Chef is crafting an authentic ${_selectedSegment?.label ?? "custom"} dish for you...',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF15803D)),
+                                  'Curating authentic ${_selectedSegment?.label ?? "specialty"} recipe according to your culinary taste...',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    height: 1.35,
+                                    color: isDark ? const Color(0xFFE5E7EB) : const Color(0xFF78350F),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
+                          const SizedBox(width: 10),
                           const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF16A34A)),
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Color(0xFFEA580C),
+                            ),
                           ),
                         ],
                       ),

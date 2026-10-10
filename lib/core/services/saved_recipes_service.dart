@@ -22,16 +22,21 @@ class SavedRecipesService {
       if (jsonStr != null && jsonStr.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(jsonStr);
         final list = decoded.map((item) => Recipe.fromJson(item as Map<String, dynamic>)).toList();
-        savedRecipesNotifier.value = list;
+        // Check if list was previously auto-seeded with curated mock recipes without user action
+        final hasOnlyCuratedSeed = list.length == mockRecipes.length && list.every((r) => r.id.startsWith('curated-'));
+        if (hasOnlyCuratedSeed) {
+          savedRecipesNotifier.value = [];
+          await _storage.delete(key: _storageKey);
+        } else {
+          savedRecipesNotifier.value = list;
+        }
       } else {
-        // Seed with initial curated recipes so user sees them on initial run
-        final initial = mockRecipes.map((r) => r.copyWith(isSaved: true)).toList();
-        savedRecipesNotifier.value = initial;
-        await _persist(initial);
+        // Start completely empty: wait for user to explicitly save or like a dish
+        savedRecipesNotifier.value = [];
       }
     } catch (e) {
       debugPrint('Error initializing SavedRecipesService: $e');
-      savedRecipesNotifier.value = mockRecipes.map((r) => r.copyWith(isSaved: true)).toList();
+      savedRecipesNotifier.value = [];
     }
     _initialized = true;
   }

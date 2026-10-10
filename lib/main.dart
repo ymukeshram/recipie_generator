@@ -10,11 +10,11 @@ import 'core/services/theme_service.dart';
 import 'core/services/google_auth_service.dart';
 import 'core/services/gamification_service.dart';
 
-Future<void> main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Parallel asynchronous initialization of all local services for instant startup
-  await Future.wait([
+  // Hydrate local services in background with a safety timeout so app boots instantly
+  Future.wait([
     ApiClient.loadSavedUrl(),
     UserSession.load(),
     savedRecipesService.init(),
@@ -22,7 +22,13 @@ Future<void> main() async {
     gamificationService.init(),
     themeService.init(),
     GoogleAuthService.load(),
-  ]);
+  ]).timeout(const Duration(milliseconds: 600), onTimeout: () {
+    debugPrint('Service hydration timed out; proceeding instantly.');
+    return [];
+  }).catchError((e) {
+    debugPrint('Error during background hydration: $e');
+    return [];
+  });
 
   runApp(const ProviderScope(child: RasoiAIApp()));
 }

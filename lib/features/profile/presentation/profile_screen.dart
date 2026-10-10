@@ -106,6 +106,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadPreferences() async {
     try {
+      final savedDiet = await _storage.read(key: 'rasoiai_selected_diet');
+      if (savedDiet != null && savedDiet.isNotEmpty) {
+        _dietaryPreference = savedDiet;
+      }
       final savedCuisines = await _storage.read(key: 'rasoiai_custom_cuisines');
       if (savedCuisines != null && savedCuisines.isNotEmpty) {
         for (var c in savedCuisines.split(',')) {
@@ -141,6 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _persistPreferences() async {
     try {
+      await _storage.write(key: 'rasoiai_selected_diet', value: _dietaryPreference);
       await _storage.write(key: 'rasoiai_custom_cuisines', value: _preferredCuisines.join(','));
       await _storage.write(key: 'rasoiai_selected_cuisines', value: _selectedCuisines.join(','));
       await _storage.write(key: 'rasoiai_custom_allergies', value: _allergies.join(','));
@@ -681,7 +686,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: isSelected ? Colors.white : AppColors.darkCharcoal,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
-                    onSelected: (val) => setState(() => _dietaryPreference = diet),
+                    onSelected: (val) {
+                      setState(() => _dietaryPreference = diet);
+                      _storage.write(key: 'rasoiai_selected_diet', value: diet);
+                    },
                   );
                 }).toList(),
               ),
