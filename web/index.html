@@ -25,14 +25,27 @@
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="rasoiai">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="apple-mobile-web-app-title" content="RasoiAI">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png?v=3">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <!-- Favicon with cache busters and fallback formats -->
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=3"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/Icon-192.png?v=3"/>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?v=3"/>
+  <link rel="alternate icon" href="favicon.png?v=3"/>
 
   <title>RasoiAI - Indian Cooking Assistant</title>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json?v=3">
+  <script>
+    (function() {
+      // Force immediate cache-bust on browser tab favicon
+      var link = document.createElement('link');
+      link.type = 'image/png';
+      link.rel = 'icon';
+      link.href = 'favicon.png?t=' + Date.now();
+      document.head.appendChild(link);
+    })();
+  </script>
   <style>
     body {
       background-color: #111315;
@@ -85,7 +98,7 @@
 </head>
 <body>
   <div class="splash-container">
-    <div class="splash-emoji">🥘</div>
+    <img src="favicon.png?v=3" alt="RasoiAI" style="width: 76px; height: 76px; border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); animation: gentle-bounce 1.6s infinite ease-in-out;" />
     <div class="splash-title">RasoiAI</div>
     <div class="splash-subtitle">Your Indian Cooking Assistant</div>
     <div class="splash-spinner"></div>
