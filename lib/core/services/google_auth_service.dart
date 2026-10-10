@@ -25,7 +25,7 @@ class GoogleAuthService {
         clientId = saved.trim();
       }
 
-      // Listen to authentication changes from Google Sign In
+      // 1. Listen to authentication changes from Google Sign In
       _googleSignIn.onCurrentUserChanged.listen((account) async {
         if (account != null) {
           final displayName = account.displayName?.trim().isNotEmpty == true
