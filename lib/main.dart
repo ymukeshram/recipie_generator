@@ -8,6 +8,7 @@ import 'core/services/saved_recipes_service.dart';
 import 'core/services/history_service.dart';
 import 'core/services/theme_service.dart';
 import 'core/services/google_auth_service.dart';
+import 'core/services/gamification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +16,7 @@ Future<void> main() async {
   await UserSession.load();
   await savedRecipesService.init();
   await historyService.init();
+  await gamificationService.init();
   await themeService.init();
   await GoogleAuthService.load();
   runApp(const ProviderScope(child: RasoiAIApp()));

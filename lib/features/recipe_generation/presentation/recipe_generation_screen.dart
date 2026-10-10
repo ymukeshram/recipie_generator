@@ -174,7 +174,7 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.bg(context),
       appBar: AppBar(
         title: const Text('Recipe Generation'),
         actions: [
@@ -311,109 +311,49 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
               ),
               const SizedBox(height: 14),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Regional Cuisine', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                        const SizedBox(height: 6),
-                        DropdownButtonFormField<String>(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildResponsiveFieldPair(
+                        constraints: constraints,
+                        first: _buildDropdownField(
+                          context: context,
+                          label: 'Regional Cuisine',
                           value: _cuisine,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                          ),
-                          items: _cuisines
-                              .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13))))
-                              .toList(),
+                          items: _cuisines,
                           onChanged: (val) => setState(() => _cuisine = val!),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Meal Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                        const SizedBox(height: 6),
-                        DropdownButtonFormField<String>(
+                        second: _buildDropdownField(
+                          context: context,
+                          label: 'Meal Category',
                           value: _mealCategory,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                          ),
-                          items: _mealCategories
-                              .map((m) => DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 13))))
-                              .toList(),
+                          items: _mealCategories,
                           onChanged: (val) => setState(() => _mealCategory = val!),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Diet Preference', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                        const SizedBox(height: 6),
-                        DropdownButtonFormField<String>(
+                      ),
+                      const SizedBox(height: 14),
+                      _buildResponsiveFieldPair(
+                        constraints: constraints,
+                        first: _buildDropdownField(
+                          context: context,
+                          label: 'Diet Preference',
                           value: _dietaryPreference,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                          ),
-                          items: _dietOptions
-                              .map((d) => DropdownMenuItem(value: d, child: Text(d, style: const TextStyle(fontSize: 13))))
-                              .toList(),
+                          items: _dietOptions,
                           onChanged: (val) => setState(() => _dietaryPreference = val!),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Spice Level', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                        const SizedBox(height: 6),
-                        DropdownButtonFormField<String>(
+                        second: _buildDropdownField(
+                          context: context,
+                          label: 'Spice Level',
                           value: _spiceLevel,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: AppColors.surface,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-                          ),
-                          items: _spiceLevels
-                              .map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 13))))
-                              .toList(),
+                          items: _spiceLevels,
                           onChanged: (val) => setState(() => _spiceLevel = val!),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 18),
 
@@ -428,7 +368,13 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Servings: $_servings People', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary)),
+                    Flexible(
+                      child: Text(
+                        'Servings: $_servings People',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.textPrimary),
+                      ),
+                    ),
                     Row(
                       children: [
                         IconButton(
@@ -509,6 +455,120 @@ class _RecipeGenerationScreenState extends State<RecipeGenerationScreen> {
       ),
     ),
   ),
+    );
+  }
+
+  Widget _buildResponsiveFieldPair({
+    required BoxConstraints constraints,
+    required Widget first,
+    required Widget second,
+  }) {
+    // Responsive: stack vertically on narrow screens (< 360dp) to prevent horizontal cramping;
+    // otherwise arrange side-by-side in a balanced Row with Expanded and consistent 12px gap.
+    if (constraints.maxWidth < 360) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          first,
+          const SizedBox(height: 12),
+          second,
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: first),
+        const SizedBox(width: 12),
+        Expanded(child: second),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.subtext(context),
+          ),
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: value,
+          isExpanded: true,
+          isDense: true,
+          dropdownColor: AppColors.cardBg(context),
+          icon: Icon(
+            Icons.arrow_drop_down,
+            color: AppColors.subtext(context),
+            size: 22,
+          ),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.cardBg(context),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.cardBorder(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.cardBorder(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.text(context), width: 1.5),
+            ),
+          ),
+          selectedItemBuilder: (BuildContext ctx) {
+            return items.map((String item) {
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  item,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.text(ctx),
+                  ),
+                ),
+              );
+            }).toList();
+          },
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.text(context),
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:rasoiai/core/services/saved_recipes_service.dart';
 import 'package:rasoiai/shared/models/recipe.dart';
 import 'package:rasoiai/shared/models/mock_recipes.dart';
 import 'package:rasoiai/shared/widgets/recipe_card.dart';
+import 'package:rasoiai/core/services/gamification_service.dart';
 
 class RecipeDetailsScreen extends StatefulWidget {
   final String recipeId;
@@ -387,6 +388,31 @@ class _RecipeDetailsScreenState extends State<RecipeDetailsScreen> {
                   ],
 
                   // Action Buttons
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32), // Forest Culinary Green
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                    label: const Text('I Cooked This Recipe! 🍳', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    onPressed: () async {
+                      await gamificationService.markRecipeCompleted(_recipe);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('🎉 Completed "${_recipe.dishName}"! +50 Chef Points & Streak Updated.'),
+                            backgroundColor: const Color(0xFF2E7D32),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.saffronGold),
                     icon: const Icon(Icons.tune),

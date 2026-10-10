@@ -4,8 +4,8 @@ import 'package:rasoiai/core/theme/app_colors.dart';
 import 'package:rasoiai/core/services/saved_recipes_service.dart';
 import 'package:rasoiai/shared/models/mock_recipes.dart';
 import 'package:rasoiai/shared/widgets/recipe_card.dart';
-import 'package:rasoiai/shared/widgets/hero_dish_showcase.dart';
 import 'package:rasoiai/shared/widgets/theme_toggle_button.dart';
+import 'package:rasoiai/features/home/presentation/widgets/surprise_me_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,15 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Dynamic Chef's Daily Pick that changes daily
-    final heroIndex = (DateTime.now().year * 365 + DateTime.now().day) % mockRecipes.length;
-    final heroRecipe = mockRecipes[heroIndex];
-
-    // 2. Reduce Card Redundancy: Deduplicate Hero Dish from the lists below
-    final nonHeroRecipes = mockRecipes.where((r) => r.id != heroRecipe.id).toList();
-
-    // 3. Dynamic Interactive Filtering based on selected cuisine pill
-    final filteredDishes = nonHeroRecipes.where((r) {
+    // Dynamic Interactive Filtering based on selected cuisine pill
+    final filteredDishes = mockRecipes.where((r) {
       if (_selectedCuisine == 'All') return true;
       final query = _selectedCuisine.toLowerCase();
       final inCuisine = r.cuisine.toLowerCase().contains(query);
@@ -49,10 +42,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return inCuisine || inCategory || inTags;
     }).toList();
 
-    final carouselDishes = filteredDishes.isNotEmpty ? filteredDishes : nonHeroRecipes;
+    final carouselDishes = filteredDishes.isNotEmpty ? filteredDishes : mockRecipes;
     final recommendedDishes = filteredDishes.isNotEmpty
         ? filteredDishes.reversed.toList()
-        : nonHeroRecipes.reversed.toList();
+        : mockRecipes.reversed.toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -117,20 +110,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Dynamic Daily Hero Dish (No redundancy with feed below)
-            SliverToBoxAdapter(
+            // Surprise Me! Interactive Spinning Wheel Card
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: HeroDishShowcase(
-                  title: heroRecipe.dishName,
-                  subtitle: heroRecipe.description,
-                  tag: 'Chef’s Daily Pick • ${heroRecipe.cuisine}',
-                  imageUrl: heroRecipe.imageUrl ??
-                      'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=800&q=80',
-                  onTap: () {
-                    context.push('/recipe/${heroRecipe.id}', extra: heroRecipe);
-                  },
-                ),
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: SurpriseMeCard(),
               ),
             ),
 

@@ -4,6 +4,8 @@ import 'package:rasoiai/core/theme/app_colors.dart';
 import 'package:rasoiai/core/networking/api_client.dart';
 import 'package:rasoiai/core/services/user_session.dart';
 import 'package:rasoiai/core/services/theme_service.dart';
+import 'package:rasoiai/core/services/gamification_service.dart';
+import 'package:rasoiai/features/profile/presentation/widgets/gamification_widgets.dart';
 import 'package:rasoiai/shared/widgets/theme_toggle_button.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -39,6 +41,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadPreferences();
+    gamificationService.newlyUnlockedBadgeNotifier.addListener(_onBadgeUnlocked);
+    gamificationService.streakCelebrationNotifier.addListener(_onStreakCelebration);
+  }
+
+  @override
+  void dispose() {
+    gamificationService.newlyUnlockedBadgeNotifier.removeListener(_onBadgeUnlocked);
+    gamificationService.streakCelebrationNotifier.removeListener(_onStreakCelebration);
+    super.dispose();
+  }
+
+  void _onBadgeUnlocked() {
+    final badge = gamificationService.newlyUnlockedBadgeNotifier.value;
+    if (badge == null || !mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🎉 BADGE UNLOCKED! 🎉', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFFD97706))),
+            const SizedBox(height: 14),
+            Text(badge.emoji, style: const TextStyle(fontSize: 54)),
+            const SizedBox(height: 10),
+            Text(badge.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 6),
+            Text(badge.description, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563))),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(color: const Color(0xFFD1FAE5), borderRadius: BorderRadius.circular(8)),
+              child: const Text('+150 Chef Points Earned', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF047857), fontSize: 12)),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.text(context), foregroundColor: Colors.white),
+            onPressed: () {
+              gamificationService.newlyUnlockedBadgeNotifier.value = null;
+              Navigator.pop(ctx);
+            },
+            child: const Text('Awesome!'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onStreakCelebration() {
+    final msg = gamificationService.streakCelebrationNotifier.value;
+    if (msg == null || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: const Color(0xFFE65100),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    gamificationService.streakCelebrationNotifier.value = null;
   }
 
   Future<void> _loadPreferences() async {
@@ -475,7 +538,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+
+              // Gamification Section: Cooking Streaks, Daily Challenges, Achievement Badges
+              ValueListenableBuilder<GamificationState?>(
+                valueListenable: gamificationService.stateNotifier,
+                builder: (context, gState, _) {
+                  if (gState == null) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      CookingStreakCard(state: gState),
+                      const SizedBox(height: 14),
+                      DailyChallengeCard(
+                        challenge: gState.dailyChallenge,
+                        onAccept: () async {
+                          await gamificationService.acceptTodayChallenge();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('🎯 Challenge Accepted! Cook any qualifying dish today to complete.'),
+                                backgroundColor: AppColors.accent,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                      BadgesGridSection(badges: gState.badges),
+                      const SizedBox(height: 14),
+                    ],
+                  );
+                },
+              ),
 
               // Server Connection Setting Card
               Container(
