@@ -11,12 +11,10 @@ class GoogleAuthService {
   // Configured Google OAuth Web Client ID
   static String? clientId = '2574068206-h8e0p4hih8ken82vcija66emko1jm6gn.apps.googleusercontent.com';
 
-  static GoogleSignIn _createGoogleSignIn() {
-    return GoogleSignIn(
-      clientId: clientId,
-      scopes: ['email', 'profile'],
-    );
-  }
+  static late final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: clientId,
+    scopes: ['email', 'profile'],
+  );
 
   static Future<void> load() async {
     try {
@@ -24,6 +22,19 @@ class GoogleAuthService {
       if (saved != null && saved.trim().isNotEmpty) {
         clientId = saved.trim();
       }
+
+      // Listen to authentication changes from Google Sign In
+      _googleSignIn.onCurrentUserChanged.listen((account) async {
+        if (account != null) {
+          final displayName = account.displayName?.trim().isNotEmpty == true
+              ? account.displayName!
+              : UserSession.deriveNameFromEmail(account.email);
+          await UserSession.setSession(name: displayName, email: account.email);
+        }
+      });
+
+      // Attempt silent sign-in
+      await _googleSignIn.signInSilently();
     } catch (_) {}
   }
 
@@ -34,14 +45,13 @@ class GoogleAuthService {
     } catch (_) {}
   }
 
-  /// Triggers standard Google OAuth Sign In popup
+  /// Triggers standard Google OAuth Sign In popup with Google accounts chooser
   static Future<void> signInWithGoogle({
     required BuildContext context,
     required VoidCallback onSuccess,
   }) async {
     try {
-      final googleSignIn = _createGoogleSignIn();
-      final account = await googleSignIn.signIn();
+      final account = await _googleSignIn.signIn();
       if (account != null) {
         final displayName = account.displayName?.trim().isNotEmpty == true
             ? account.displayName!
