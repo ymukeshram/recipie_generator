@@ -29,18 +29,65 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>rasoiai</title>
+  <title>RasoiAI - Indian Cooking Assistant</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      background-color: #111315;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+    .splash-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .splash-emoji {
+      font-size: 52px;
+      animation: gentle-bounce 1.6s infinite ease-in-out;
+    }
+    .splash-title {
+      color: #F3F4F6;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+    }
+    .splash-subtitle {
+      color: #9CA3AF;
+      font-size: 13px;
+    }
+    .splash-spinner {
+      margin-top: 8px;
+      width: 26px;
+      height: 26px;
+      border: 2.5px solid rgba(255, 255, 255, 0.12);
+      border-top-color: #2D6A4F;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes gentle-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <div class="splash-container">
+    <div class="splash-emoji">🥘</div>
+    <div class="splash-title">RasoiAI</div>
+    <div class="splash-subtitle">Your Indian Cooking Assistant</div>
+    <div class="splash-spinner"></div>
+  </div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

@@ -12,13 +12,18 @@ import 'core/services/gamification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ApiClient.loadSavedUrl();
-  await UserSession.load();
-  await savedRecipesService.init();
-  await historyService.init();
-  await gamificationService.init();
-  await themeService.init();
-  await GoogleAuthService.load();
+  
+  // Parallel asynchronous initialization of all local services for instant startup
+  await Future.wait([
+    ApiClient.loadSavedUrl(),
+    UserSession.load(),
+    savedRecipesService.init(),
+    historyService.init(),
+    gamificationService.init(),
+    themeService.init(),
+    GoogleAuthService.load(),
+  ]);
+
   runApp(const ProviderScope(child: RasoiAIApp()));
 }
 

@@ -43,6 +43,12 @@ class RecipeCard extends StatelessWidget {
                         height: 125,
                         width: double.infinity,
                         fit: BoxFit.cover,
+                        memCacheWidth: 400,
+                        memCacheHeight: 250,
+                        maxWidthDiskCache: 400,
+                        maxHeightDiskCache: 250,
+                        fadeInDuration: const Duration(milliseconds: 120),
+                        placeholder: (_, __) => _buildPlaceholder(context),
                         errorWidget: (_, __, ___) => _buildPlaceholder(context),
                       )
                     : _buildPlaceholder(context),

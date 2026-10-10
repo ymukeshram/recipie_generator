@@ -122,7 +122,7 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
     super.initState();
     _wheelController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3600),
+      duration: const Duration(milliseconds: 2400),
     );
   }
 
@@ -137,6 +137,7 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
 
     setState(() {
       _isSpinning = true;
+      _isGeneratingRecipe = true;
       _generatedRecipe = null;
       _selectedSegment = null;
     });
@@ -150,8 +151,7 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
     final centerAngle = targetIndex * segmentAngle + (segmentAngle / 2);
 
     // Pointer is at -pi/2 (12 o'clock).
-    // When wheel rotates by totalAngle, target segment center aligns with -pi/2
-    final rotations = 5 + _random.nextInt(3); // 5 to 7 full rotations
+    final rotations = 4 + _random.nextInt(2); // 4 to 5 smooth rotations
     final targetRotation = (rotations * 2 * math.pi) + (-math.pi / 2 - centerAngle);
 
     final startAngle = _currentAngle % (2 * math.pi);
@@ -162,23 +162,26 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
       CurvedAnimation(parent: _wheelController, curve: Curves.easeOutCubic),
     );
 
+    // Concurrently prefetch recipe while the wheel is spinning for instant result reveal
+    final recipeFuture = _fetchRecipeForSegment(targetSegment);
+
     _wheelController.reset();
-    _wheelController.forward().then((_) {
+    _wheelController.forward().then((_) async {
       _currentAngle = endAngle;
-      setState(() {
-        _isSpinning = false;
-        _selectedSegment = targetSegment;
-      });
-      _fetchRecipeForSegment(targetSegment);
+      if (mounted) {
+        setState(() {
+          _isSpinning = false;
+          _selectedSegment = targetSegment;
+        });
+        await recipeFuture;
+      }
     });
   }
 
   Future<void> _fetchRecipeForSegment(WheelSegment segment) async {
-    setState(() => _isGeneratingRecipe = true);
-
     Recipe? recipe;
 
-    // 1. Try real backend API generation
+    // 1. Try backend API generation with fast timeout so cold starts never block
     try {
       recipe = await apiClient.generateRecipe(
         dishName: '',
@@ -187,10 +190,10 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
         prompt: 'Surprise me with an authentic, beloved ${segment.label} recipe.',
         servings: 2,
         maxTimeMinutes: segment.label.contains('Quick') ? 20 : 35,
-      );
+      ).timeout(const Duration(milliseconds: 2800));
     } catch (_) {}
 
-    // 2. Reliable Curated Fallback
+    // 2. Reliable Instant Curated Fallback
     if (recipe == null) {
       final matching = mockRecipes.where((r) {
         final query = segment.cuisineHint.toLowerCase();
