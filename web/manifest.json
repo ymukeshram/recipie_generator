@@ -1,11 +1,11 @@
 {
-    "name": "rasoiai",
-    "short_name": "rasoiai",
+    "name": "RasoiAI - Indian Cooking Assistant",
+    "short_name": "RasoiAI",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#111315",
+    "theme_color": "#E65100",
+    "description": "AI-Powered Indian Cooking & Recipe Assistant",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
