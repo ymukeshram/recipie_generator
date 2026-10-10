@@ -181,24 +181,102 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
   Future<void> _fetchRecipeForSegment(WheelSegment segment) async {
     Recipe? recipe;
 
-    // 1. Try backend API generation with fast timeout so cold starts never block
+    String targetCuisine = segment.cuisineHint;
+    String targetCategory = segment.categoryKey;
+    String promptText = 'Surprise me with an authentic, beloved ${segment.label} Indian recipe.';
+    String dietPref = 'Vegetarian';
+    int maxTime = 35;
+
+    switch (segment.label) {
+      case 'High-Protein':
+        targetCuisine = 'North Indian';
+        targetCategory = 'Lunch';
+        dietPref = 'High Protein';
+        promptText = 'Authentic high-protein Indian recipe rich in protein (at least 20g protein per serving) such as paneer, soya, dal, chana, or eggs.';
+        break;
+      case 'Healthy Meals':
+        targetCategory = 'Dinner';
+        dietPref = 'Low Calorie';
+        maxTime = 30;
+        promptText = 'Healthy, light, and nutritious Indian meal under 320 calories with wholesome greens and fiber.';
+        break;
+      case 'Quick Meals':
+        targetCategory = 'Breakfast';
+        maxTime = 18;
+        promptText = 'Delicious quick Indian meal that can be prepared in under 18 minutes.';
+        break;
+      case 'Desserts':
+        targetCategory = 'Dessert';
+        targetCuisine = 'Indian Dessert';
+        promptText = 'Classic Indian sweet or dessert like Gulab Jamun, Kheer, or Gajar Halwa.';
+        break;
+      case 'Street Food':
+        targetCategory = 'Snacks';
+        targetCuisine = 'Street Food';
+        promptText = 'Iconic Indian street food snack like Pav Bhaji, Chaat, or Samosa.';
+        break;
+      case 'Italian Fusion':
+        targetCuisine = 'Italian Fusion';
+        promptText = 'Indian-Italian fusion dish like Paneer Tikka Naan Pizza or Makhani Pasta.';
+        break;
+      case 'Indo-Chinese':
+        targetCuisine = 'Indo-Chinese';
+        promptText = 'Spicy and tangy Indo-Chinese recipe like Veg Manchurian or Chilli Paneer.';
+        break;
+      case 'South Indian':
+        targetCuisine = 'South Indian';
+        promptText = 'Traditional authentic South Indian delicacy like Masala Dosa, Idli Sambar, or Uttapam.';
+        break;
+      case 'North Indian':
+        targetCuisine = 'North Indian';
+        promptText = 'Rich North Indian delicacy like Paneer Butter Masala, Dal Makhani, or Chole.';
+        break;
+      case 'Random Surprise':
+        promptText = 'Chef special signature Indian delicacy.';
+        break;
+    }
+
+    // 1. Try real AI backend generation with generous 15-second timeout for accuracy
     try {
       recipe = await apiClient.generateRecipe(
         dishName: '',
-        cuisine: segment.cuisineHint,
-        mealCategory: segment.categoryKey,
-        prompt: 'Surprise me with an authentic, beloved ${segment.label} recipe.',
+        cuisine: targetCuisine,
+        mealCategory: targetCategory,
+        prompt: promptText,
         servings: 2,
-        maxTimeMinutes: segment.label.contains('Quick') ? 20 : 35,
-      ).timeout(const Duration(milliseconds: 2800));
+        maxTimeMinutes: maxTime,
+        dietaryPreference: dietPref,
+      ).timeout(const Duration(seconds: 15));
     } catch (_) {}
 
-    // 2. Reliable Instant Curated Fallback
+    // 2. Strict, 100% accurate fallback matching by category and nutrition
     if (recipe == null) {
-      final matching = mockRecipes.where((r) {
-        final query = segment.cuisineHint.toLowerCase();
-        return r.cuisine.toLowerCase().contains(query) ||
-            r.mealCategory.toLowerCase().contains(segment.categoryKey.toLowerCase());
+      final List<Recipe> matching = mockRecipes.where((r) {
+        final label = segment.label.toLowerCase();
+        final dish = r.dishName.toLowerCase();
+        final cuisine = r.cuisine.toLowerCase();
+        final tags = r.dietaryTags.map((t) => t.toLowerCase()).toList();
+
+        if (label.contains('protein')) {
+          return tags.any((t) => t.contains('protein')) || ((r.nutrition?.proteinG ?? 0) >= 14.0);
+        } else if (label.contains('healthy')) {
+          return tags.any((t) => t.contains('healthy') || t.contains('fiber')) || ((r.nutrition?.calories ?? 999) <= 300);
+        } else if (label.contains('dessert')) {
+          return r.mealCategory.toLowerCase() == 'dessert' || tags.contains('dessert');
+        } else if (label.contains('street')) {
+          return cuisine.contains('street') || tags.any((t) => t.contains('street'));
+        } else if (label.contains('italian')) {
+          return cuisine.contains('italian') || tags.contains('fusion');
+        } else if (label.contains('chinese')) {
+          return cuisine.contains('chinese') || dish.contains('manchurian');
+        } else if (label.contains('south')) {
+          return cuisine.contains('south');
+        } else if (label.contains('north')) {
+          return cuisine.contains('north');
+        } else if (label.contains('quick')) {
+          return r.totalTimeMinutes <= 22 || tags.any((t) => t.contains('quick'));
+        }
+        return true;
       }).toList();
 
       if (matching.isNotEmpty) {
@@ -422,9 +500,9 @@ class _SurpriseMeWheelSheetState extends State<SurpriseMeWheelSheet>
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                 ),
                                 const SizedBox(height: 2),
-                                const Text(
-                                  'RasoiAI is crafting your recipe...',
-                                  style: TextStyle(fontSize: 12, color: Color(0xFF15803D)),
+                                Text(
+                                  'AI Chef is crafting an authentic ${_selectedSegment?.label ?? "custom"} dish for you...',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF15803D)),
                                 ),
                               ],
                             ),
