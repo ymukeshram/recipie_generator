@@ -96,6 +96,7 @@ class UserSession {
     required String name,
     required String email,
     required String password,
+    bool googleVerified = true,
   }) async {
     try {
       final accounts = await _getAccounts();
@@ -106,10 +107,41 @@ class UserSession {
       accounts[normalizedEmail] = {
         'name': name.trim(),
         'password': password,
+        'googleVerified': googleVerified,
         'createdAt': DateTime.now().toIso8601String(),
       };
       await _storage.write(key: _accountsKey, value: jsonEncode(accounts));
       await setSession(name: name, email: email);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Check whether an account has been registered
+  static Future<bool> isAccountRegistered(String email) async {
+    try {
+      final accounts = await _getAccounts();
+      return accounts.containsKey(email.trim().toLowerCase());
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Reset password for a registered account
+  static Future<bool> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    try {
+      final accounts = await _getAccounts();
+      final normalizedEmail = email.trim().toLowerCase();
+      if (!accounts.containsKey(normalizedEmail)) {
+        return false;
+      }
+      accounts[normalizedEmail]['password'] = newPassword;
+      accounts[normalizedEmail]['updatedAt'] = DateTime.now().toIso8601String();
+      await _storage.write(key: _accountsKey, value: jsonEncode(accounts));
       return true;
     } catch (_) {
       return false;
@@ -129,7 +161,7 @@ class UserSession {
         return (
           isValid: false,
           name: null,
-          error: 'No registered account found. Please tap Sign Up to create an account.',
+          error: 'No registered account found. Please Sign Up to verify your Google account first.',
         );
       }
 
@@ -138,7 +170,7 @@ class UserSession {
         return (
           isValid: false,
           name: null,
-          error: 'Account not found. Please check your email or Sign Up.',
+          error: 'Account not found. Please Sign Up to verify your Google account first.',
         );
       }
 
@@ -146,7 +178,7 @@ class UserSession {
         return (
           isValid: false,
           name: null,
-          error: 'Incorrect password. Please try again.',
+          error: 'Incorrect password. Please try again or use Forgot Password.',
         );
       }
 

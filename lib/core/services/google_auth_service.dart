@@ -82,6 +82,63 @@ class GoogleAuthService {
     }
   }
 
+  /// Authenticates with Google to verify genuine ownership of an account,
+  /// without immediately creating a persistent app session.
+  /// Used for Google-anchored Signup and Password Reset verification.
+  static Future<({String email, String name})?> verifyGoogleAccount({
+    required BuildContext context,
+  }) async {
+    _activeContext = context;
+
+    if (kIsWeb) {
+      platform_auth.startGoogleSignIn();
+      return null;
+    }
+
+    try {
+      await _initMobile();
+      final GoogleSignInAccount account = await GoogleSignIn.instance.authenticate();
+      final verifiedEmail = account.email.trim();
+      if (verifiedEmail.isEmpty) {
+        throw Exception('No verified email returned from Google.');
+      }
+      final rawName = account.displayName?.trim() ?? '';
+      final displayName = rawName.isNotEmpty
+          ? rawName
+          : UserSession.deriveNameFromEmail(verifiedEmail);
+
+      return (email: verifiedEmail, name: displayName);
+    } on GoogleSignInException catch (e) {
+      if (!context.mounted) return null;
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google account verification was cancelled.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        _showAuthErrorDialog(
+          context: context,
+          title: 'Verification Failed',
+          message:
+              'Google account verification could not be completed. Please ensure your Google account is configured and try again.',
+          onRetry: () => verifyGoogleAccount(context: context),
+        );
+      }
+      return null;
+    } catch (e) {
+      if (!context.mounted) return null;
+      _showAuthErrorDialog(
+        context: context,
+        title: 'Verification Failed',
+        message: 'Unable to verify Google account. Please check your connection and try again.',
+        onRetry: () => verifyGoogleAccount(context: context),
+      );
+      return null;
+    }
+  }
+
   /// Trigger authentic Google OAuth sign-in flow
   static Future<void> signInWithGoogle({
     required BuildContext context,

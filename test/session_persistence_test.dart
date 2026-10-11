@@ -124,15 +124,47 @@ void main() {
     expect(UserSession.isLoggedIn, isFalse);
   });
 
-  test('Legacy routes /signup and /forgot-password are routed to /login', () {
+  test('Routes /signup and /forgot-password are registered with authentic screens', () {
     final signupRoute = appRouter.configuration.routes
         .whereType<GoRoute>()
         .firstWhere((r) => r.path == '/signup');
-    expect(signupRoute.redirect, isNotNull);
+    expect(signupRoute.builder, isNotNull);
 
     final forgotPasswordRoute = appRouter.configuration.routes
         .whereType<GoRoute>()
         .firstWhere((r) => r.path == '/forgot-password');
-    expect(forgotPasswordRoute.redirect, isNotNull);
+    expect(forgotPasswordRoute.builder, isNotNull);
+  });
+
+  test('isAccountRegistered and resetPassword function correctly', () async {
+    expect(await UserSession.isAccountRegistered('newchef@gmail.com'), isFalse);
+
+    await UserSession.registerAccount(
+      name: 'New Chef',
+      email: 'newchef@gmail.com',
+      password: 'password123',
+    );
+    expect(await UserSession.isAccountRegistered('newchef@gmail.com'), isTrue);
+
+    // Reset password
+    final resetOk = await UserSession.resetPassword(
+      email: 'newchef@gmail.com',
+      newPassword: 'newpassword456',
+    );
+    expect(resetOk, isTrue);
+
+    // Old password fails
+    final oldLogin = await UserSession.validateCredentials(
+      email: 'newchef@gmail.com',
+      password: 'password123',
+    );
+    expect(oldLogin.isValid, isFalse);
+
+    // New password succeeds
+    final newLogin = await UserSession.validateCredentials(
+      email: 'newchef@gmail.com',
+      password: 'newpassword456',
+    );
+    expect(newLogin.isValid, isTrue);
   });
 }
