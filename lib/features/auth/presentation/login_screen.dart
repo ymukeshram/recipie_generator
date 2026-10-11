@@ -151,11 +151,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: const InputDecoration(
-                            labelText: 'Registered Google Email',
+                            labelText: 'Email Address',
                             prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppColors.textSecondary),
                           ),
                           validator: (val) {
-                            if (val == null || val.trim().isEmpty) return 'Please enter your registered email';
+                            if (val == null || val.trim().isEmpty) return 'Please enter your email';
                             if (!val.contains('@')) return 'Enter a valid email address';
                             return null;
                           },
@@ -292,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
 
                   const Text(
-                    'Only Google-verified accounts can create a profile.\nNo unauthorized access permitted.',
+                    'Safe & secure authentication with Google OAuth & encrypted credentials.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3),
                   ),

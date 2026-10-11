@@ -118,6 +118,26 @@ class UserSession {
     }
   }
 
+  /// Register or update an account authenticated directly via Google OAuth
+  static Future<void> registerGoogleAccount({
+    required String name,
+    required String email,
+  }) async {
+    try {
+      final accounts = await _getAccounts();
+      final normalizedEmail = email.trim().toLowerCase();
+      if (!accounts.containsKey(normalizedEmail)) {
+        accounts[normalizedEmail] = {
+          'name': name.trim().isNotEmpty ? name.trim() : deriveNameFromEmail(email),
+          'password': '',
+          'googleVerified': true,
+          'createdAt': DateTime.now().toIso8601String(),
+        };
+        await _storage.write(key: _accountsKey, value: jsonEncode(accounts));
+      }
+    } catch (_) {}
+  }
+
   /// Check whether an account has been registered
   static Future<bool> isAccountRegistered(String email) async {
     try {
@@ -161,7 +181,7 @@ class UserSession {
         return (
           isValid: false,
           name: null,
-          error: 'No registered account found. Please Sign Up to verify your Google account first.',
+          error: 'No registered account found. Please Sign Up to create an account first.',
         );
       }
 
@@ -170,15 +190,24 @@ class UserSession {
         return (
           isValid: false,
           name: null,
-          error: 'Account not found. Please Sign Up to verify your Google account first.',
+          error: 'Account not found. Please Sign Up to create an account first.',
         );
       }
 
-      if (user['password'] != password) {
+      final storedPassword = user['password'] as String? ?? '';
+      if (storedPassword.isEmpty) {
         return (
           isValid: false,
           name: null,
-          error: 'Incorrect password. Please try again or use Forgot Password.',
+          error: 'This account was created with Google. Please use "Continue with Google" to sign in.',
+        );
+      }
+
+      if (storedPassword != password) {
+        return (
+          isValid: false,
+          name: null,
+          error: 'Incorrect password. Please try again or tap "Forgot Password?".',
         );
       }
 

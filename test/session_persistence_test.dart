@@ -167,4 +167,23 @@ void main() {
     );
     expect(newLogin.isValid, isTrue);
   });
+
+  test('registerGoogleAccount registers user and marks account registered without password', () async {
+    expect(await UserSession.isAccountRegistered('googleuser@gmail.com'), isFalse);
+
+    await UserSession.registerGoogleAccount(
+      name: 'Google User',
+      email: 'googleuser@gmail.com',
+    );
+
+    expect(await UserSession.isAccountRegistered('googleuser@gmail.com'), isTrue);
+
+    // Manual login attempt on google-only account directs to Continue with Google
+    final credCheck = await UserSession.validateCredentials(
+      email: 'googleuser@gmail.com',
+      password: 'somepassword',
+    );
+    expect(credCheck.isValid, isFalse);
+    expect(credCheck.error, contains('Continue with Google'));
+  });
 }
