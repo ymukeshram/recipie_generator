@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rasoiai/core/services/user_session.dart';
@@ -7,12 +8,35 @@ import 'google_auth_stub.dart'
     if (dart.library.html) 'google_auth_web.dart' as platform_auth;
 
 class GoogleAuthService {
-  static const String clientId =
+  static const String serverClientId =
       '2574068206-h8e0p4hih8ken82vcija66emko1jm6gn.apps.googleusercontent.com';
+  static const String iosClientId =
+      '2574068206-1d1ir70tgbd68rk5tfp0frp2epin09pu.apps.googleusercontent.com';
+
+  static const String clientId = serverClientId;
 
   static VoidCallback? onAuthSuccessCallback;
   static BuildContext? _activeContext;
   static bool _mobileInitialized = false;
+
+  static Future<void> _initMobile() async {
+    if (_mobileInitialized) return;
+    try {
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await GoogleSignIn.instance.initialize(
+          clientId: iosClientId,
+          serverClientId: serverClientId,
+        );
+      } else {
+        await GoogleSignIn.instance.initialize(
+          serverClientId: serverClientId,
+        );
+      }
+      _mobileInitialized = true;
+    } catch (e) {
+      debugPrint('[GoogleAuthService] GoogleSignIn initialization diagnostic: $e');
+    }
+  }
 
   /// Initialize Google Auth listener
   static Future<void> load() async {
@@ -43,14 +67,7 @@ class GoogleAuthService {
         },
       );
     } else {
-      try {
-        await GoogleSignIn.instance.initialize(
-          serverClientId: clientId,
-        );
-        _mobileInitialized = true;
-      } catch (e) {
-        debugPrint('[GoogleAuthService] GoogleSignIn initialization diagnostic: $e');
-      }
+      await _initMobile();
     }
   }
 
@@ -80,12 +97,7 @@ class GoogleAuthService {
 
     // Native Android / iOS authentication flow
     try {
-      if (!_mobileInitialized) {
-        await GoogleSignIn.instance.initialize(
-          serverClientId: clientId,
-        );
-        _mobileInitialized = true;
-      }
+      await _initMobile();
 
       final GoogleSignInAccount account = await GoogleSignIn.instance.authenticate();
       final verifiedEmail = account.email.trim();
