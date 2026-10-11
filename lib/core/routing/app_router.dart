@@ -14,9 +14,9 @@ import 'package:rasoiai/features/recipe_customization/presentation/recipe_custom
 import 'package:rasoiai/features/saved_recipes/presentation/saved_recipes_screen.dart';
 import 'package:rasoiai/features/history/presentation/history_screen.dart';
 import 'package:rasoiai/features/profile/presentation/profile_screen.dart';
-import 'package:rasoiai/core/theme/app_colors.dart';
 import 'package:rasoiai/core/theme/app_theme.dart';
 import 'package:rasoiai/shared/models/recipe.dart';
+import 'package:rasoiai/core/services/user_session.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -37,7 +37,26 @@ class ForceLightScope extends StatelessWidget {
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/onboarding',
+  refreshListenable: UserSession.authNotifier,
+  initialLocation: UserSession.isLoggedIn ? '/home' : '/onboarding',
+  redirect: (BuildContext context, GoRouterState state) {
+    final bool loggedIn = UserSession.isLoggedIn;
+    final String loc = state.matchedLocation;
+    final bool isAuthRoute =
+        loc == '/login' || loc == '/signup' || loc == '/onboarding' || loc == '/forgot-password';
+
+    // If user is not logged in and attempts to access protected screens, route them to onboarding
+    if (!loggedIn && !isAuthRoute) {
+      return '/onboarding';
+    }
+
+    // If user is already logged in and attempts to access onboarding or login, route directly to home
+    if (loggedIn && isAuthRoute) {
+      return '/home';
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/onboarding',

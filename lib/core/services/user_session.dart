@@ -1,34 +1,64 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class UserSession {
   static const _storage = FlutterSecureStorage();
+  static const _isLoggedInKey = 'rasoiai_user_logged_in_state';
   static const _nameKey = 'rasoiai_user_name';
   static const _emailKey = 'rasoiai_user_email';
   static const _accountsKey = 'rasoiai_registered_accounts_v1';
+
+  static bool isLoggedIn = false;
+  static final ValueNotifier<bool> authNotifier = ValueNotifier<bool>(false);
 
   static String userName = 'Chef';
   static String userEmail = 'chef@rasoiai.com';
 
   static Future<void> load() async {
     try {
+      final savedLoggedIn = await _storage.read(key: _isLoggedInKey);
       final savedName = await _storage.read(key: _nameKey);
       final savedEmail = await _storage.read(key: _emailKey);
+
+      if (savedLoggedIn == 'true') {
+        isLoggedIn = true;
+      } else {
+        isLoggedIn = false;
+      }
+
       if (savedName != null && savedName.trim().isNotEmpty) {
         userName = savedName.trim();
       }
       if (savedEmail != null && savedEmail.trim().isNotEmpty) {
         userEmail = savedEmail.trim();
       }
+
+      authNotifier.value = isLoggedIn;
     } catch (_) {}
   }
 
   static Future<void> setSession({required String name, required String email}) async {
     userName = name.trim();
     userEmail = email.trim();
+    isLoggedIn = true;
+    authNotifier.value = true;
     try {
+      await _storage.write(key: _isLoggedInKey, value: 'true');
       await _storage.write(key: _nameKey, value: userName);
       await _storage.write(key: _emailKey, value: userEmail);
+    } catch (_) {}
+  }
+
+  static Future<void> clearSession() async {
+    isLoggedIn = false;
+    userName = 'Chef';
+    userEmail = 'chef@rasoiai.com';
+    authNotifier.value = false;
+    try {
+      await _storage.write(key: _isLoggedInKey, value: 'false');
+      await _storage.delete(key: _nameKey);
+      await _storage.delete(key: _emailKey);
     } catch (_) {}
   }
 

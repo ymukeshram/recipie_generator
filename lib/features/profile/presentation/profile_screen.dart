@@ -5,6 +5,7 @@ import 'package:rasoiai/core/networking/api_client.dart';
 import 'package:rasoiai/core/services/user_session.dart';
 import 'package:rasoiai/core/services/theme_service.dart';
 import 'package:rasoiai/core/services/gamification_service.dart';
+import 'package:rasoiai/core/services/google_auth_service.dart';
 import 'package:rasoiai/features/profile/presentation/widgets/gamification_widgets.dart';
 import 'package:rasoiai/shared/widgets/theme_toggle_button.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -382,15 +383,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () async {
                 final target = controller.text.trim();
                 if (target.isNotEmpty) {
-                  await apiClient.updateServerUrl(target);
-                  if (mounted) setState(() {});
+                  final messenger = ScaffoldMessenger.of(context);
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Server connected: ${ApiClient.baseUrl}'),
-                      backgroundColor: AppColors.terracotta,
-                    ),
-                  );
+                  await apiClient.updateServerUrl(target);
+                  if (mounted) {
+                    setState(() {});
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Server connected: ${ApiClient.baseUrl}'),
+                        backgroundColor: AppColors.terracotta,
+                      ),
+                    );
+                  }
                 }
               },
               child: const Text('Save & Connect'),
@@ -446,18 +450,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               final newName = nameController.text.trim();
               final newEmail = emailController.text.trim();
               if (newName.isNotEmpty) {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.pop(ctx);
                 await UserSession.setSession(
                   name: newName,
                   email: newEmail.isNotEmpty ? newEmail : UserSession.userEmail,
                 );
-                if (mounted) setState(() {});
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Chef profile updated!'),
-                    backgroundColor: AppColors.terracotta,
-                  ),
-                );
+                if (mounted) {
+                  setState(() {});
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Chef profile updated!'),
+                      backgroundColor: AppColors.terracotta,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Save'),
@@ -892,7 +899,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: const Icon(Icons.logout, color: AppColors.errorRed),
                 label: const Text('Sign Out', style: TextStyle(color: AppColors.errorRed)),
                 style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.errorRed)),
-                onPressed: () => context.go('/login'),
+                onPressed: () async {
+                  await GoogleAuthService.signOut();
+                  await UserSession.clearSession();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                },
               ),
               const SizedBox(height: 30),
             ],

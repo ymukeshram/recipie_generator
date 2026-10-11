@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rasoiai/core/services/user_session.dart';
 
 import 'google_auth_stub.dart'
@@ -11,6 +12,7 @@ class GoogleAuthService {
 
   static VoidCallback? onAuthSuccessCallback;
   static BuildContext? _activeContext;
+  static bool _mobileInitialized = false;
 
   /// Initialize Google Auth listener
   static Future<void> load() async {
@@ -34,6 +36,26 @@ class GoogleAuthService {
           onAuthSuccessCallback?.call();
         },
       );
+    } else {
+      try {
+        await GoogleSignIn.instance.initialize(
+          serverClientId: clientId,
+        );
+        _mobileInitialized = true;
+      } catch (e) {
+        debugPrint('[GoogleAuthService] Mobile GoogleSignIn init notice: $e');
+      }
+    }
+  }
+
+  /// Sign out from Google Auth
+  static Future<void> signOut() async {
+    if (!kIsWeb) {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (e) {
+        debugPrint('[GoogleAuthService] Sign out notice: $e');
+      }
     }
   }
 
@@ -47,20 +69,58 @@ class GoogleAuthService {
 
     if (kIsWeb) {
       platform_auth.startGoogleSignIn();
-    } else {
-      // Demo / non-web fallback
-      const demoEmail = 'ymukeshram@gmail.com';
-      final demoName = UserSession.deriveNameFromEmail(demoEmail);
-      await UserSession.setSession(name: demoName, email: demoEmail);
+      return;
+    }
+
+    // Genuine Native Android / Mobile flow
+    try {
+      if (!_mobileInitialized) {
+        await GoogleSignIn.instance.initialize(
+          serverClientId: clientId,
+        );
+        _mobileInitialized = true;
+      }
+
+      final account = await GoogleSignIn.instance.authenticate();
+      final email = account.email.trim();
+      final rawName = account.displayName?.trim() ?? '';
+      final displayName = rawName.isNotEmpty ? rawName : UserSession.deriveNameFromEmail(email);
+
+      await UserSession.setSession(name: displayName, email: email);
+      debugPrint('[GoogleAuthService] Mobile Google Sign-In success: $displayName ($email)');
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Welcome, $demoName! Signed in with Google. ✅'),
+            content: Text('Welcome, $displayName! Signed in with Google. ✅'),
             backgroundColor: const Color(0xFF1E8E3E),
             behavior: SnackBarBehavior.floating,
           ),
         );
         onSuccess();
+      }
+    } catch (e) {
+      debugPrint('[GoogleAuthService] Mobile sign-in exception: $e');
+      if (context.mounted) {
+        final errString = e.toString();
+        if (errString.contains('canceled') ||
+            errString.contains('cancelled') ||
+            errString.contains('SIGN_IN_CANCELLED')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Google Sign-In was cancelled.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Google Sign-In failed: $errString'),
+              backgroundColor: const Color(0xFFDC2626),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }

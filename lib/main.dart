@@ -10,25 +10,23 @@ import 'core/services/theme_service.dart';
 import 'core/services/google_auth_service.dart';
 import 'core/services/gamification_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Hydrate local services in background with a safety timeout so app boots instantly
-  Future.wait([
-    ApiClient.loadSavedUrl(),
-    UserSession.load(),
-    savedRecipesService.init(),
-    historyService.init(),
-    gamificationService.init(),
-    themeService.init(),
-    GoogleAuthService.load(),
-  ]).timeout(const Duration(milliseconds: 600), onTimeout: () {
-    debugPrint('Service hydration timed out; proceeding instantly.');
-    return [];
-  }).catchError((e) {
-    debugPrint('Error during background hydration: $e');
-    return [];
-  });
+  // Hydrate local services before running app so session state is known
+  try {
+    await Future.wait([
+      ApiClient.loadSavedUrl(),
+      UserSession.load(),
+      savedRecipesService.init(),
+      historyService.init(),
+      gamificationService.init(),
+      themeService.init(),
+      GoogleAuthService.load(),
+    ]).timeout(const Duration(seconds: 2));
+  } catch (e) {
+    debugPrint('Hydration note: $e');
+  }
 
   runApp(const ProviderScope(child: RasoiAIApp()));
 }
