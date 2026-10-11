@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 from typing import Optional
+from fastapi import HTTPException
 from google import genai
 from google.genai import types
 from app.core.config import settings
@@ -218,54 +219,62 @@ Return ONLY a JSON object with this exact structure:
     async def analyze_dish_image(self, image_bytes: bytes, mime_type: str = "image/jpeg") -> ImageAnalysisResponse:
         client = self.get_client()
         if not client:
-            logger.info("No Gemini API key detected, using authentic vision mock response.")
-            return ImageAnalysisResponse(
-                identified_dish_name="Hyderabadi Chicken Biryani",
-                confidence=0.94,
-                regional_cuisine="Hyderabadi / South Indian",
-                key_visual_ingredients=["Basmati Rice", "Fried Onions (Birista)", "Mint & Coriander", "Saffron Milk"],
-                summary_description="Fragrant long-grain basmati rice layered with aromatic marinated chicken, saffron, and fresh herbs cooked in traditional dum style.",
-            )
+            raise HTTPException(status_code=503, detail="Gemini AI is not configured on the server.")
 
-        try:
-            image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-            prompt = """
-Identify the Indian dish shown in this image.
+        prompt = """
+Identify the Indian dish shown in this image with high culinary accuracy and precision.
+Carefully examine the entire presentation, breads (e.g. Puri, Roti, Naan, Bhature), gravies/curries (e.g. Aloo Sabzi, Dal, Chole), sides, garnish, and serving style (e.g. banana leaf, thali).
 Return ONLY a JSON object with this exact structure:
 {
-  "identified_dish_name": "string (the exact Indian dish name)",
+  "identified_dish_name": "string (the exact specific dish name, e.g. Puri Aloo, Chole Bhature, Masala Dosa, Idli Sambar, Pav Bhaji, etc.)",
   "confidence": float (between 0.0 and 1.0),
-  "regional_cuisine": "string (e.g., North Indian, South Indian, Mughlai, Bengali, etc.)",
+  "regional_cuisine": "string (e.g., North Indian, South Indian, Maharashtrian, Bengali, Gujarati, etc.)",
   "key_visual_ingredients": ["string", "string"],
   "summary_description": "string (concise 1-2 sentence culinary summary of the dish visual characteristics)"
 }
 """
-            response = client.models.generate_content(
-                model=settings.GEMINI_MODEL,
-                contents=[image_part, prompt],
-                config=types.GenerateContentConfig(
-                    system_instruction=INDIAN_CULINARY_SYSTEM_PROMPT,
-                    response_mime_type="application/json",
-                    temperature=0.2,
-                ),
-            )
-            data = json.loads(response.text)
-            return ImageAnalysisResponse(
-                identified_dish_name=data.get("identified_dish_name", "Indian Culinary Dish"),
-                confidence=float(data.get("confidence", 0.9)),
-                regional_cuisine=data.get("regional_cuisine", "Indian"),
-                key_visual_ingredients=data.get("key_visual_ingredients", []),
-                summary_description=data.get("summary_description", "Authentic traditional Indian delicacy."),
-            )
-        except Exception as e:
-            logger.error(f"Error during Gemini vision dish analysis: {e}", exc_info=True)
-            return ImageAnalysisResponse(
-                identified_dish_name="Paneer Butter Masala",
-                confidence=0.91,
-                regional_cuisine="North Indian",
-                key_visual_ingredients=["Paneer Cubes", "Rich Tomato-Butter Gravy", "Kasuri Methi", "Cream"],
-                summary_description="Creamy, velvety tomato-based cottage cheese curry garnished with fresh culinary cream.",
-            )
+        models_to_try = [settings.GEMINI_MODEL, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
+        last_error = None
+
+        for model_name in list(dict.fromkeys(models_to_try)):
+            try:
+                image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=[image_part, prompt],
+                    config=types.GenerateContentConfig(
+                        system_instruction=INDIAN_CULINARY_SYSTEM_PROMPT,
+                        response_mime_type="application/json",
+                        temperature=0.2,
+                    ),
+                )
+                raw_text = response.text.strip()
+                if raw_text.startswith("```json"):
+                    raw_text = raw_text[7:]
+                if raw_text.endswith("```"):
+                    raw_text = raw_text[:-3]
+                data = json.loads(raw_text.strip())
+                dish_name = data.get("identified_dish_name", "").strip()
+                if not dish_name:
+                    continue
+
+                return ImageAnalysisResponse(
+                    identified_dish_name=dish_name,
+                    confidence=float(data.get("confidence", 0.95)),
+                    regional_cuisine=data.get("regional_cuisine", "Indian"),
+                    key_visual_ingredients=data.get("key_visual_ingredients", []),
+                    summary_description=data.get("summary_description", f"Authentic traditional Indian delicacy: {dish_name}."),
+                )
+            except Exception as ex:
+                logger.warning(f"Model {model_name} failed during dish image analysis: {ex}")
+                last_error = ex
+                continue
+
+        logger.error(f"All vision models failed during dish analysis: {last_error}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI Vision could not analyze dish photo: {str(last_error)}"
+        )
 
     async def customize_recipe(self, req: RecipeCustomizeRequest) -> RecipeResponse:
         recipe_id = f"custom-{uuid.uuid4().hex[:8]}"

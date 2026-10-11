@@ -88,8 +88,9 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 90),
+        receiveTimeout: const Duration(seconds: 90),
+        sendTimeout: const Duration(seconds: 60),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -138,24 +139,49 @@ class ApiClient {
     return null;
   }
 
-  Future<Map<String, dynamic>?> analyzeDishImage(List<int> imageBytes, String filename) async {
-    try {
-      final formData = FormData.fromMap({
-        'file': MultipartFile.fromBytes(
-          imageBytes,
-          filename: filename,
-        ),
-      });
+  Future<Map<String, dynamic>?> analyzeDishImage(
+    List<int> imageBytes,
+    String filename, {
+    void Function(String message)? onProgress,
+  }) async {
+    int attempts = 0;
+    const maxAttempts = 2;
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        if (attempts > 1) {
+          onProgress?.call('Waking up culinary AI server, re-trying request...');
+        } else {
+          onProgress?.call('Uploading image to Gemini AI Vision...');
+        }
 
-      final response = await _dio.post(
-        '/recipes/analyze-image',
-        data: formData,
-      );
+        final formData = FormData.fromMap({
+          'file': MultipartFile.fromBytes(
+            imageBytes,
+            filename: filename,
+          ),
+        });
 
-      if (response.statusCode == 200 && response.data != null) {
-        return response.data as Map<String, dynamic>;
+        final response = await _dio.post(
+          '/recipes/analyze-image',
+          data: formData,
+          options: Options(
+            sendTimeout: const Duration(seconds: 60),
+            receiveTimeout: const Duration(seconds: 90),
+          ),
+        );
+
+        if (response.statusCode == 200 && response.data != null) {
+          return response.data as Map<String, dynamic>;
+        }
+      } catch (e) {
+        if (attempts < maxAttempts) {
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        rethrow;
       }
-    } catch (_) {}
+    }
     return null;
   }
 
