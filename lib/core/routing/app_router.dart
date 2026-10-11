@@ -45,9 +45,9 @@ final GoRouter appRouter = GoRouter(
     final bool isAuthRoute =
         loc == '/login' || loc == '/signup' || loc == '/onboarding' || loc == '/forgot-password';
 
-    // If user is not logged in and attempts to access protected screens, route them to onboarding
+    // If user is not logged in and attempts to access protected screens, route them to /login
     if (!loggedIn && !isAuthRoute) {
-      return '/onboarding';
+      return '/login';
     }
 
     // If user is already logged in and attempts to access onboarding or login, route directly to home

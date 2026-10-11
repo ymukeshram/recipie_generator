@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rasoiai/core/services/user_session.dart';
 
@@ -11,10 +10,6 @@ class GoogleAuthService {
   static const String clientId =
       '2574068206-h8e0p4hih8ken82vcija66emko1jm6gn.apps.googleusercontent.com';
 
-  static const String androidPackageName = 'com.rasoiai.rasoiai';
-  static const String debugSha1Fingerprint =
-      '70:D1:FC:4E:05:BB:58:2E:91:C3:FD:95:2A:AE:25:34:4C:BE:D1:F6';
-
   static VoidCallback? onAuthSuccessCallback;
   static BuildContext? _activeContext;
   static bool _mobileInitialized = false;
@@ -24,9 +19,15 @@ class GoogleAuthService {
     if (kIsWeb) {
       platform_auth.initGoogleAuth(
         onSuccess: (name, email) async {
-          final displayName = name.isNotEmpty ? name : UserSession.deriveNameFromEmail(email);
-          await UserSession.setSession(name: displayName, email: email);
-          debugPrint('[GoogleAuthService] Session saved for $displayName ($email)');
+          final cleanEmail = email.trim();
+          if (cleanEmail.isEmpty) return;
+
+          final displayName = name.trim().isNotEmpty
+              ? name.trim()
+              : UserSession.deriveNameFromEmail(cleanEmail);
+
+          await UserSession.setSession(name: displayName, email: cleanEmail);
+          debugPrint('[GoogleAuthService] Web session authenticated for $displayName ($cleanEmail)');
 
           if (_activeContext != null && _activeContext!.mounted) {
             ScaffoldMessenger.of(_activeContext!).showSnackBar(
@@ -48,7 +49,7 @@ class GoogleAuthService {
         );
         _mobileInitialized = true;
       } catch (e) {
-        debugPrint('[GoogleAuthService] Mobile GoogleSignIn init notice: $e');
+        debugPrint('[GoogleAuthService] GoogleSignIn initialization diagnostic: $e');
       }
     }
   }
@@ -59,12 +60,12 @@ class GoogleAuthService {
       try {
         await GoogleSignIn.instance.signOut();
       } catch (e) {
-        debugPrint('[GoogleAuthService] Sign out notice: $e');
+        debugPrint('[GoogleAuthService] Sign out diagnostic: $e');
       }
     }
   }
 
-  /// Trigger Google OAuth sign-in flow
+  /// Trigger authentic Google OAuth sign-in flow
   static Future<void> signInWithGoogle({
     required BuildContext context,
     required VoidCallback onSuccess,
@@ -77,7 +78,7 @@ class GoogleAuthService {
       return;
     }
 
-    // Native Android / Mobile flow
+    // Native Android / iOS authentication flow
     try {
       if (!_mobileInitialized) {
         await GoogleSignIn.instance.initialize(
@@ -86,13 +87,21 @@ class GoogleAuthService {
         _mobileInitialized = true;
       }
 
-      final account = await GoogleSignIn.instance.authenticate();
-      final email = account.email.trim();
-      final rawName = account.displayName?.trim() ?? '';
-      final displayName = rawName.isNotEmpty ? rawName : UserSession.deriveNameFromEmail(email);
+      final GoogleSignInAccount account = await GoogleSignIn.instance.authenticate();
+      final verifiedEmail = account.email.trim();
 
-      await UserSession.setSession(name: displayName, email: email);
-      debugPrint('[GoogleAuthService] Mobile Google Sign-In success: $displayName ($email)');
+      if (verifiedEmail.isEmpty) {
+        throw Exception('No verified email returned from Google.');
+      }
+
+      final rawName = account.displayName?.trim() ?? '';
+      final displayName = rawName.isNotEmpty
+          ? rawName
+          : UserSession.deriveNameFromEmail(verifiedEmail);
+
+      // Authenticate only with verified credentials
+      await UserSession.setSession(name: displayName, email: verifiedEmail);
+      debugPrint('[GoogleAuthService] Verified authentication succeeded for $displayName ($verifiedEmail)');
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,215 +113,115 @@ class GoogleAuthService {
         );
         onSuccess();
       }
-    } catch (e) {
-      debugPrint('[GoogleAuthService] Mobile sign-in exception: $e');
-      if (context.mounted) {
-        // If Google Play Services closes the sheet (e.g. SHA-1 not yet in Google Cloud Console),
-        // show the Google Account verification & sign-in sheet so the user is never blocked.
-        _showGoogleAuthFallbackSheet(
+    } on GoogleSignInException catch (e) {
+      debugPrint('[GoogleAuthService] GoogleSignInException: code=${e.code}, description=${e.description}');
+      if (!context.mounted) return;
+
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        // User actively cancelled or dismissed the account selector
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Google Sign-In was cancelled.'),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: const Color(0xFF81C784),
+              onPressed: () => signInWithGoogle(context: context, onSuccess: onSuccess),
+            ),
+          ),
+        );
+      } else {
+        // Configuration, network, or platform provider issue
+        String userFriendlyMessage =
+            'Google Sign-In could not be completed. Please ensure your Google account is configured and try again.';
+
+        if (e.code == GoogleSignInExceptionCode.clientConfigurationError ||
+            e.code == GoogleSignInExceptionCode.providerConfigurationError) {
+          userFriendlyMessage =
+              'Google Sign-In configuration error: The application credentials could not be verified by Google Play Services. Please check your network and Google Cloud project configuration.';
+        } else if (e.description != null && e.description!.isNotEmpty) {
+          userFriendlyMessage = 'Google Sign-In error: ${e.description}';
+        }
+
+        _showAuthErrorDialog(
           context: context,
-          onSuccess: onSuccess,
+          title: 'Sign-In Failed',
+          message: userFriendlyMessage,
+          onRetry: () => signInWithGoogle(context: context, onSuccess: onSuccess),
+        );
+      }
+    } catch (e) {
+      debugPrint('[GoogleAuthService] Authentication exception: $e');
+      if (!context.mounted) return;
+
+      final errStr = e.toString().toLowerCase();
+      final bool isCancellation =
+          errStr.contains('canceled') || errStr.contains('cancelled') || errStr.contains('12501');
+
+      if (isCancellation) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Google Sign-In was cancelled.'),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: const Color(0xFF81C784),
+              onPressed: () => signInWithGoogle(context: context, onSuccess: onSuccess),
+            ),
+          ),
+        );
+      } else {
+        _showAuthErrorDialog(
+          context: context,
+          title: 'Authentication Error',
+          message:
+              'Unable to complete Google authentication. Please verify your connection and try again.',
+          onRetry: () => signInWithGoogle(context: context, onSuccess: onSuccess),
         );
       }
     }
   }
 
-  /// Bottom sheet presented when Google Play Services cancels due to missing SHA-1 registration
-  static void _showGoogleAuthFallbackSheet({
+  /// Displays an error dialog with a Retry button without bypassing authentication
+  static void _showAuthErrorDialog({
     required BuildContext context,
-    required VoidCallback onSuccess,
+    required String title,
+    required String message,
+    required VoidCallback onRetry,
   }) {
-    final emailController = TextEditingController(text: 'ymukeshram@gmail.com');
-    final nameController = TextEditingController(
-      text: UserSession.deriveNameFromEmail('ymukeshram@gmail.com'),
-    );
-
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 24),
+            const SizedBox(width: 8),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Dismiss'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onRetry();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2D6A4F),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Retry'),
+          ),
+        ],
       ),
-      builder: (bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 24,
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.account_circle, color: Colors.blue, size: 28),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Google Sign-In Account',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Google Play Services verification details',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber.shade300),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.amber.shade900),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Android SHA-1 Fingerprint Setup',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.amber.shade900,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Google Play Services closed the prompt because this app\'s SHA-1 must be added to your Google Cloud Console for automatic native verification.',
-                      style: TextStyle(fontSize: 11, color: Colors.amber.shade900, height: 1.3),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'SHA-1: $debugSha1Fingerprint',
-                            style: TextStyle(fontSize: 10, fontFamily: 'monospace'),
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: () {
-                            Clipboard.setData(
-                              const ClipboardData(text: debugSha1Fingerprint),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('SHA-1 copied to clipboard!'),
-                                duration: Duration(seconds: 2),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.copy, size: 14),
-                          label: const Text('Copy', style: TextStyle(fontSize: 11)),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            minimumSize: Size.zero,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Continue Signing In with your Google Email:',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Google Email',
-                  prefixIcon: Icon(Icons.email_outlined, size: 20),
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                ),
-                onChanged: (val) {
-                  nameController.text = UserSession.deriveNameFromEmail(val);
-                },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Display Name',
-                  prefixIcon: Icon(Icons.person_outline, size: 20),
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 18),
-              ElevatedButton(
-                onPressed: () async {
-                  final email = emailController.text.trim();
-                  final name = nameController.text.trim().isNotEmpty
-                      ? nameController.text.trim()
-                      : UserSession.deriveNameFromEmail(email);
-
-                  if (email.isEmpty || !email.contains('@')) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter a valid email address.')),
-                    );
-                    return;
-                  }
-
-                  Navigator.pop(bottomSheetContext);
-
-                  await UserSession.setSession(name: name, email: email);
-
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Welcome, $name! Signed in with Google. ✅'),
-                        backgroundColor: const Color(0xFF1E8E3E),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                    onSuccess();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2D6A4F),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Confirm & Sign In', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.pop(bottomSheetContext),
-                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

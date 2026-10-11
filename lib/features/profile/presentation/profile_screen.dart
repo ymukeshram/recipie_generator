@@ -536,12 +536,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            UserSession.userName,
+                            UserSession.userName.isNotEmpty ? UserSession.userName : 'Chef',
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: AppColors.text(context)),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            UserSession.userEmail,
+                            UserSession.userEmail.isNotEmpty ? UserSession.userEmail : 'No email linked',
                             style: TextStyle(color: AppColors.subtext(context), fontSize: 13),
                           ),
                         ],

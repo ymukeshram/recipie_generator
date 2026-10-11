@@ -12,64 +12,85 @@ class UserSession {
   static bool isLoggedIn = false;
   static final ValueNotifier<bool> authNotifier = ValueNotifier<bool>(false);
 
-  static String userName = 'Chef';
-  static String userEmail = 'chef@rasoiai.com';
+  static String userName = '';
+  static String userEmail = '';
 
+  /// Hydrate persistent session state from secure storage
   static Future<void> load() async {
     try {
       final savedLoggedIn = await _storage.read(key: _isLoggedInKey);
       final savedName = await _storage.read(key: _nameKey);
       final savedEmail = await _storage.read(key: _emailKey);
 
-      if (savedLoggedIn == 'true') {
+      if (savedLoggedIn == 'true' && savedEmail != null && savedEmail.trim().isNotEmpty) {
         isLoggedIn = true;
+        userEmail = savedEmail.trim();
+        userName = (savedName != null && savedName.trim().isNotEmpty)
+            ? savedName.trim()
+            : deriveNameFromEmail(userEmail);
       } else {
         isLoggedIn = false;
-      }
-
-      if (savedName != null && savedName.trim().isNotEmpty) {
-        userName = savedName.trim();
-      }
-      if (savedEmail != null && savedEmail.trim().isNotEmpty) {
-        userEmail = savedEmail.trim();
+        userName = '';
+        userEmail = '';
       }
 
       authNotifier.value = isLoggedIn;
-    } catch (_) {}
+    } catch (_) {
+      isLoggedIn = false;
+      userName = '';
+      userEmail = '';
+      authNotifier.value = false;
+    }
   }
 
+  /// Store a genuine authenticated session
   static Future<void> setSession({required String name, required String email}) async {
-    userName = name.trim();
-    userEmail = email.trim();
+    final cleanEmail = email.trim();
+    if (cleanEmail.isEmpty) return;
+
+    final cleanName = name.trim().isNotEmpty ? name.trim() : deriveNameFromEmail(cleanEmail);
+
+    userName = cleanName;
+    userEmail = cleanEmail;
     isLoggedIn = true;
     authNotifier.value = true;
+
     try {
       await _storage.write(key: _isLoggedInKey, value: 'true');
       await _storage.write(key: _nameKey, value: userName);
       await _storage.write(key: _emailKey, value: userEmail);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[UserSession] Error writing session to secure storage: $e');
+    }
   }
 
+  /// Terminate the active session and remove stored credentials
   static Future<void> clearSession() async {
     isLoggedIn = false;
-    userName = 'Chef';
-    userEmail = 'chef@rasoiai.com';
+    userName = '';
+    userEmail = '';
     authNotifier.value = false;
+
     try {
       await _storage.write(key: _isLoggedInKey, value: 'false');
       await _storage.delete(key: _nameKey);
       await _storage.delete(key: _emailKey);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[UserSession] Error clearing session from secure storage: $e');
+    }
   }
 
+  /// Update the chef's display name
   static Future<void> updateName(String name) async {
-    userName = name.trim();
+    final cleanName = name.trim();
+    if (cleanName.isEmpty) return;
+    userName = cleanName;
     try {
       await _storage.write(key: _nameKey, value: userName);
     } catch (_) {}
   }
 
-  /// Register a new user account with hashed/stored credentials
+  /// Register a new user account
   static Future<bool> registerAccount({
     required String name,
     required String email,
@@ -94,7 +115,7 @@ class UserSession {
     }
   }
 
-  /// Validate user credentials on login
+  /// Validate user credentials on login against registered accounts
   static Future<({bool isValid, String? name, String? error})> validateCredentials({
     required String email,
     required String password,
@@ -103,15 +124,11 @@ class UserSession {
       final accounts = await _getAccounts();
       final normalizedEmail = email.trim().toLowerCase();
 
-      // If no accounts have ever been created, create default chef demo account
       if (accounts.isEmpty) {
-        if (normalizedEmail == 'chef@rasoiai.com' && password == 'chef123') {
-          return (isValid: true, name: 'Chef', error: null);
-        }
         return (
           isValid: false,
           name: null,
-          error: 'No registered account found with this email. Please Sign Up first.',
+          error: 'No registered account found. Please tap Sign Up to create an account.',
         );
       }
 
@@ -132,7 +149,8 @@ class UserSession {
         );
       }
 
-      return (isValid: true, name: user['name'] as String?, error: null);
+      final registeredName = user['name'] as String?;
+      return (isValid: true, name: registeredName, error: null);
     } catch (_) {
       return (isValid: false, name: null, error: 'Authentication failed.');
     }
