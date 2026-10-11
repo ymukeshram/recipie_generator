@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:go_router/go_router.dart';
 import 'package:rasoiai/core/services/user_session.dart';
 
 import 'google_auth_stub.dart'
@@ -102,6 +103,24 @@ class GoogleAuthService {
       if (verifiedEmail.isEmpty) {
         throw Exception('No verified email returned from Google.');
       }
+
+      // Explicitly authorize OAuth scope to trigger Google Cloud test users verification
+      try {
+        await account.authorizationClient.authorizeScopes(['email']);
+      } catch (authError) {
+        debugPrint('[GoogleAuthService] Scope authorization rejected: $authError');
+        if (context.mounted) {
+          _showAuthErrorDialog(
+            context: context,
+            title: 'Account Not Authorized',
+            message:
+                'This Google account ($verifiedEmail) is not authorized. If your Google Cloud project is in Testing mode, ensure this email is added under OAuth consent screen > Test users.',
+            onRetry: () => verifyGoogleAccount(context: context),
+          );
+        }
+        return null;
+      }
+
       final rawName = account.displayName?.trim() ?? '';
       final displayName = rawName.isNotEmpty
           ? rawName
@@ -165,6 +184,67 @@ class GoogleAuthService {
       if (verifiedEmail.isEmpty) {
         await UserSession.clearSession();
         throw Exception('No verified email returned from Google.');
+      }
+
+      // 1. Authorize OAuth scope to verify against Google Cloud OAuth Consent Screen
+      try {
+        await account.authorizationClient.authorizeScopes(['email']);
+      } catch (authError) {
+        await UserSession.clearSession();
+        debugPrint('[GoogleAuthService] Scope authorization rejected: $authError');
+        if (context.mounted) {
+          _showAuthErrorDialog(
+            context: context,
+            title: 'Account Not Authorized',
+            message:
+                'This Google account ($verifiedEmail) is not authorized. If your Google Cloud project is in Testing mode, ensure this email is added under OAuth consent screen > Test users.',
+            onRetry: () => signInWithGoogle(context: context, onSuccess: onSuccess),
+          );
+        }
+        return;
+      }
+
+      // 2. Enforce registered account check: only accounts that have completed registration can log in!
+      final isRegistered = await UserSession.isAccountRegistered(verifiedEmail);
+      if (!isRegistered) {
+        await UserSession.clearSession();
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 24),
+                  SizedBox(width: 8),
+                  Text('Account Not Signed Up', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+              content: Text(
+                '$verifiedEmail has not been registered in RasoiAI yet.\n\nOnly accounts that have completed sign up can log in. Please tap Sign Up to create your account first.',
+                style: const TextStyle(fontSize: 14, height: 1.4),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Dismiss'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    context.push('/signup');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2D6A4F),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Go to Sign Up'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
       }
 
       final rawName = account.displayName?.trim() ?? '';
