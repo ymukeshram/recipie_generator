@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:rasoiai/core/services/user_session.dart';
 import 'package:rasoiai/core/routing/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -109,5 +110,29 @@ void main() {
     expect(UserSession.isLoggedIn, isFalse);
     // App router exists and can be inspected
     expect(appRouter, isNotNull);
+  });
+
+  test('Failed authentication guarantees UserSession remains strictly unauthenticated', () async {
+    // Ensure any dirty state is cleared
+    await UserSession.clearSession();
+    expect(UserSession.isLoggedIn, isFalse);
+    expect(UserSession.userName, isEmpty);
+    expect(UserSession.userEmail, isEmpty);
+
+    // Verify subsequent load also remains false
+    await UserSession.load();
+    expect(UserSession.isLoggedIn, isFalse);
+  });
+
+  test('Legacy routes /signup and /forgot-password are routed to /login', () {
+    final signupRoute = appRouter.configuration.routes
+        .whereType<GoRoute>()
+        .firstWhere((r) => r.path == '/signup');
+    expect(signupRoute.redirect, isNotNull);
+
+    final forgotPasswordRoute = appRouter.configuration.routes
+        .whereType<GoRoute>()
+        .firstWhere((r) => r.path == '/forgot-password');
+    expect(forgotPasswordRoute.redirect, isNotNull);
   });
 }

@@ -73,6 +73,7 @@ class UserSession {
 
     try {
       await _storage.write(key: _isLoggedInKey, value: 'false');
+      await _storage.delete(key: _isLoggedInKey);
       await _storage.delete(key: _nameKey);
       await _storage.delete(key: _emailKey);
     } catch (e) {

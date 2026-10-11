@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rasoiai/core/theme/app_colors.dart';
-
 import 'package:rasoiai/core/services/user_session.dart';
 import 'package:rasoiai/core/services/google_auth_service.dart';
 
@@ -13,56 +12,31 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _isLoading = false;
-
-  void _handleLogin() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() => _isLoading = true);
-      final email = _emailController.text.trim();
-      final password = _passwordController.text;
-
-      final result = await UserSession.validateCredentials(
-        email: email,
-        password: password,
-      );
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      if (result.isValid) {
-        final name = result.name ?? UserSession.deriveNameFromEmail(email);
-        await UserSession.setSession(name: name, email: email);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Welcome back, $name! 👋'),
-              backgroundColor: const Color(0xFF16A34A),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          context.go('/home');
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.error ?? 'Invalid email or password.'),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
+  bool _isSigningIn = false;
 
   @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    // Guarantee that arriving on the login screen starts with a clean unauthenticated slate
+    UserSession.clearSession();
+  }
+
+  void _handleGoogleSignIn() async {
+    if (_isSigningIn) return;
+    setState(() => _isSigningIn = true);
+
+    await GoogleAuthService.signInWithGoogle(
+      context: context,
+      onSuccess: () {
+        if (mounted) {
+          context.go('/home');
+        }
+      },
+    );
+
+    if (mounted) {
+      setState(() => _isSigningIn = false);
+    }
   }
 
   @override
@@ -72,188 +46,207 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Minimalist App Header
-                  const Center(
-                    child: Text('🍲', style: TextStyle(fontSize: 38)),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Minimalist App Header
+                const Center(
+                  child: Text('🍲', style: TextStyle(fontSize: 48)),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'RasoiAI',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'RasoiAI',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.4,
-                    ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Your Indian Culinary & Recipe Assistant',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Sign in to your Indian cooking assistant',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
+                ),
+                const SizedBox(height: 36),
 
-                  // Clean Phone Card Container
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Email Address',
-                            prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppColors.textSecondary),
-                          ),
-                          validator: (val) {
-                            if (val == null || val.isEmpty) return 'Please enter your email';
-                            if (!val.contains('@')) return 'Enter a valid email address';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 14),
-
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: const Icon(Icons.lock_outline, size: 20, color: AppColors.textSecondary),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                color: AppColors.textSecondary,
-                                size: 20,
-                              ),
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                            ),
-                          ),
-                          validator: (val) {
-                            if (val == null || val.isEmpty) return 'Please enter your password';
-                            if (val.length < 6) return 'Password must be at least 6 characters';
-                            return null;
-                          },
-                        ),
-
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () => context.push('/forgot-password'),
-                            child: const Text(
-                              'Forgot Password?',
-                              style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _handleLogin,
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                )
-                              : const Text('Sign In'),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            const Expanded(child: Divider(color: AppColors.border)),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              child: Text('OR', style: TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
-                            ),
-                            const Expanded(child: Divider(color: AppColors.border)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        OutlinedButton(
-                          onPressed: () {
-                            GoogleAuthService.signInWithGoogle(
-                              context: context,
-                              onSuccess: () => context.go('/home'),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF1F2937),
-                            minimumSize: const Size.fromHeight(48),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            side: BorderSide(color: Colors.grey.shade300, width: 1.2),
-                            elevation: 0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.network(
-                                'https://developers.google.com/identity/images/g-logo.png',
-                                width: 18,
-                                height: 18,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata, size: 22, color: Colors.blue),
-                              ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'Login with Google',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1F2937),
-                                  letterSpacing: 0.1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account? ", style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                      GestureDetector(
-                        onTap: () => context.push('/signup'),
-                        child: const Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
+                // Card Container
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                ],
-              ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Welcome to RasoiAI',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Sign in with your verified Google account to discover authentic recipes, snap Indian dishes, and customize regional curries.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Feature Highlights
+                      _buildFeatureItem('🍛', 'Personalized Regional Recipes', 'North, South, Punjabi, Gujrati & more'),
+                      const SizedBox(height: 12),
+                      _buildFeatureItem('📷', 'AI Dish Recognition', 'Snap photos to identify Indian foods instantly'),
+                      const SizedBox(height: 12),
+                      _buildFeatureItem('🌿', 'Smart Ingredient Substitution', 'Strict allergy, pantry & spice customization'),
+                      const SizedBox(height: 32),
+
+                      // Exclusive Authentic Google Sign-In Button
+                      ElevatedButton(
+                        onPressed: _isSigningIn ? null : _handleGoogleSignIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF1F2937),
+                          disabledBackgroundColor: Colors.white70,
+                          minimumSize: const Size.fromHeight(52),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey.shade300, width: 1.2),
+                          ),
+                          elevation: 1,
+                        ),
+                        child: _isSigningIn
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF2D6A4F),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Connecting to Google...',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1F2937),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.network(
+                                    'https://developers.google.com/identity/images/g-logo.png',
+                                    width: 20,
+                                    height: 20,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.g_mobiledata,
+                                      size: 24,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Sign in with Google',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1F2937),
+                                      letterSpacing: 0.1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Security & Privacy Notice
+                const Text(
+                  'RasoiAI uses secure Google OAuth authentication.\nNo passwords or unauthorized access permitted.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFeatureItem(String emoji, String title, String subtitle) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Center(child: Text(emoji, style: const TextStyle(fontSize: 18))),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

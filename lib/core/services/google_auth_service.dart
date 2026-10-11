@@ -90,6 +90,9 @@ class GoogleAuthService {
     _activeContext = context;
     onAuthSuccessCallback = onSuccess;
 
+    // Ensure any previous or stale session state is strictly reset
+    await UserSession.clearSession();
+
     if (kIsWeb) {
       platform_auth.startGoogleSignIn();
       return;
@@ -103,6 +106,7 @@ class GoogleAuthService {
       final verifiedEmail = account.email.trim();
 
       if (verifiedEmail.isEmpty) {
+        await UserSession.clearSession();
         throw Exception('No verified email returned from Google.');
       }
 
@@ -126,6 +130,7 @@ class GoogleAuthService {
         onSuccess();
       }
     } on GoogleSignInException catch (e) {
+      await UserSession.clearSession();
       debugPrint('[GoogleAuthService] GoogleSignInException: code=${e.code}, description=${e.description}');
       if (!context.mounted) return;
 
@@ -150,7 +155,7 @@ class GoogleAuthService {
         if (e.code == GoogleSignInExceptionCode.clientConfigurationError ||
             e.code == GoogleSignInExceptionCode.providerConfigurationError) {
           userFriendlyMessage =
-              'Google Sign-In configuration error: The application credentials could not be verified by Google Play Services. Please check your network and Google Cloud project configuration.';
+              'Google Sign-In configuration error: Google authentication could not be completed. If this app is in Testing mode in Google Cloud Console, ensure your Google email is added under OAuth consent screen > Test users, or verify Google Play Services.';
         } else if (e.description != null && e.description!.isNotEmpty) {
           userFriendlyMessage = 'Google Sign-In error: ${e.description}';
         }
@@ -163,6 +168,7 @@ class GoogleAuthService {
         );
       }
     } catch (e) {
+      await UserSession.clearSession();
       debugPrint('[GoogleAuthService] Authentication exception: $e');
       if (!context.mounted) return;
 
@@ -185,9 +191,9 @@ class GoogleAuthService {
       } else {
         _showAuthErrorDialog(
           context: context,
-          title: 'Authentication Error',
+          title: 'Sign-In Failed',
           message:
-              'Unable to complete Google authentication. Please verify your connection and try again.',
+              'Unable to complete Google authentication. Only verified Google accounts can sign in. Please check your network connection and try again.',
           onRetry: () => signInWithGoogle(context: context, onSuccess: onSuccess),
         );
       }

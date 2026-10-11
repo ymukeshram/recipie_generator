@@ -68,11 +68,11 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/signup',
-      builder: (context, state) => const ForceLightScope(child: SignupScreen()),
+      redirect: (context, state) => '/login',
     ),
     GoRoute(
       path: '/forgot-password',
-      builder: (context, state) => const ForceLightScope(child: ForgotPasswordScreen()),
+      redirect: (context, state) => '/login',
     ),
 
     // Shell Route with persistent Bottom Navigation
