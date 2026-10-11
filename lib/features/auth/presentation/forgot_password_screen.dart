@@ -61,7 +61,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Identity confirmed for ${_verifiedEmail}! Please enter your new password.'),
+            content: Text('Identity confirmed for $_verifiedEmail! Please enter your new password.'),
             backgroundColor: const Color(0xFF16A34A),
             behavior: SnackBarBehavior.floating,
           ),
@@ -203,7 +203,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     'https://developers.google.com/identity/images/g-logo.png',
                                     width: 18,
                                     height: 18,
-                                    errorBuilder: (_, __, ___) => const Icon(Icons.account_circle, size: 20, color: Colors.blue),
+                                    errorBuilder: (_, _, _) => const Icon(Icons.account_circle, size: 20, color: Colors.blue),
                                   ),
                                   const SizedBox(width: 10),
                                   const Text(
